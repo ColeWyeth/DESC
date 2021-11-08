@@ -28,6 +28,7 @@ DESC_parameters.beta = final_beta;
 DESC_parameters.n_sample = 15;
 DESC_parameters.make_plots = true;
 DESC_parameters.R_orig = R_orig;
+DESC_parameters.ErrVec = ErrVec;
 
 % For dense graphs with sufficient uncorrupted 3-cycles for all edges, 
 % the following parameters may work even better: reweighting parameter can gradually

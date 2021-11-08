@@ -68,9 +68,10 @@ params.iters = learning_iters;
 params.learning_rate = learning_rate;
 params.make_plots = true;
 params.R_orig = R_orig; % to plot convergence only
+params.ErrVec = ErrVec; % to plot convergence only
 
 %R_est = desc_rotation_sampled(Ind', RijMat, params);
-R_est = desc_rotation_sampled(Ind', RijMat, params);
+R_est = desc_rotation(Ind', RijMat, params);
     
 t1=cputime-t0;
 

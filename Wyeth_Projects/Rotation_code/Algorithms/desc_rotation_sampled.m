@@ -163,7 +163,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
     proj=1;
     
     % Convergence plotting information
-    svec_changes = zeros(1,0);
+    svec_errors = zeros(1,0);
     obj_vals = zeros(1,0);
     MSE_means = zeros(1,0);
     MSE_medians = zeros(1,0);
@@ -215,7 +215,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
     average_change = mean(abs(S_vec - S_vec_last));
     fprintf('iter %d: average change in S_vec %f\n', iter, average_change); 
     if params.make_plots
-        svec_changes(end+1) = average_change;
+        svec_errors(end+1) = mean(abs(params.ErrVec - S_vec));
         obj_vals(end+1) = wijk*(S_vec(Ind_jk)' + S_vec(Ind_ki)');
         R_est = GCW(Ind, AdjMat, RijMat, S_vec);
         [~, MSE_means(end+1),MSE_medians(end+1), ~] = GlobalSOdCorrectRight(R_est, params.R_orig);
@@ -237,10 +237,10 @@ function R_est = desc_rotation(Ind, RijMat, params)
         tiledlayout(2,2);
         
         nexttile
-        plot(svec_changes);
+        plot(svec_errors);
         title('Convergence of Corruption Estimate Vector (SVec, sampled)');
         xlabel('Iteration number');
-        ylabel('Average change in SVec Elements');
+        ylabel('Average distance to true corruption');
         
         nexttile
         plot(obj_vals);

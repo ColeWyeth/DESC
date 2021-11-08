@@ -144,7 +144,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
     proj=1;
     
     % Convergence plotting information
-    svec_changes = zeros(1,0);
+    svec_errors = zeros(1,0);
     obj_vals = zeros(1,0);
     MSE_means = zeros(1,0);
     MSE_medians = zeros(1,0);
@@ -189,14 +189,14 @@ function R_est = desc_rotation(Ind, RijMat, params)
                nsample = CoDeg_vec_pos(l);
                grad = grad_long((cum_ind(l)+1):cum_ind(l+1));  
                nv = ones(1,nsample)/(nsample^0.5);
-               if rm==1
-                    grad = grad - (grad*nv')*nv; % Riemmanian Project 
-               end 
                
                % simplest "kick"
-               %grad = grad/(norm(grad)+1*10^(-8));
-              
+%                grad = grad/(norm(grad)+1*10^(-8));
                
+               if rm==1
+                    grad = grad - (grad*nv')*nv; % Riemmanian Project 
+               end
+
                step_size  = (learning_rate/(2^fix(iter/25)));
                
                % kick gradient 
@@ -234,7 +234,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
     fprintf('iter %d: average change in S_vec %f\n', iter, average_change); 
     
     if params.make_plots
-        svec_changes(end+1) = average_change;
+        svec_errors(end+1) = mean(abs(params.ErrVec - S_vec));
         obj_vals(end+1) = wijk*(S_vec(Ind_jk)' + S_vec(Ind_ki)');
         R_est = GCW(Ind, AdjMat, RijMat, S_vec);
         [~, MSE_means(end+1),MSE_medians(end+1), ~] = GlobalSOdCorrectRight(R_est, params.R_orig);
@@ -242,7 +242,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
     
     % kick gradient
 %     if average_change < 10^(-4)
-%         kick_factor = 10;
+%         kick_factor = 100;
 %     else
 %         kick_factor = 1;
 %     end 
@@ -263,10 +263,10 @@ function R_est = desc_rotation(Ind, RijMat, params)
         tiledlayout(2,2);
         
         nexttile
-        plot(svec_changes);
+        plot(svec_errors);
         title('Convergence of Corruption Estimate Vector (SVec)');
         xlabel('Iteration number');
-        ylabel('Average change in SVec Elements');
+        ylabel('Average distance to true corruption');
         
         nexttile
         plot(obj_vals);
