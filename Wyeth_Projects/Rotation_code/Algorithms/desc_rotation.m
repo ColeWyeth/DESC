@@ -138,7 +138,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
 
     S_vec_last = S_vec;
     %%%%%%%%%%%%%
-    learning_rate = params.learning_rate;%0.1;
+%     learning_rate = params.learning_rate;%0.1;
     learning_iters = params.iters;
     rm=1;
     proj=1;
@@ -174,6 +174,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
            end   
 
            grad_long = S_vec(Ind_jk)+S_vec(Ind_ki)+(sum_ikj+sum_jki).*S0_long;
+           step_long = params.Gradient.GetStep(grad_long);
 
            % average version
 %            past_grads(end+1, :) = grad_long;
@@ -187,17 +188,17 @@ function R_est = desc_rotation(Ind, RijMat, params)
            for l = 1:m_pos
                IJ = CoDeg_pos_ind(l);
                nsample = CoDeg_vec_pos(l);
-               grad = grad_long((cum_ind(l)+1):cum_ind(l+1));  
+               step = step_long((cum_ind(l)+1):cum_ind(l+1));  
                nv = ones(1,nsample)/(nsample^0.5);
                
                % simplest "kick"
 %                grad = grad/(norm(grad)+1*10^(-8));
                
                if rm==1
-                    grad = grad - (grad*nv')*nv; % Riemmanian Project 
+                    step = step - (step*nv')*nv; % Riemmanian Project 
                end
-
-               step_size  = (learning_rate/(2^fix(iter/25)));
+% 
+%                step_size  = (learning_rate/(2^fix(iter/25)));
                
                % kick gradient 
 %                step_size = kick_factor*step_size;
@@ -208,9 +209,9 @@ function R_est = desc_rotation(Ind, RijMat, params)
 %                w_new = ...
 %                wijk(range_l) - step_size * grad + heaviness*(wijk(range_l) - prev_wijk(range_l)); 
 %                prev_wijk(range_l) = curr_wijk; 
-           
+               
                w_new = ...
-               wijk((cum_ind(l)+1):cum_ind(l+1)) - step_size * grad;
+               wijk((cum_ind(l)+1):cum_ind(l+1)) + step;
                if proj==1
                        % proj to simplex
                        w = sort(w_new); 
