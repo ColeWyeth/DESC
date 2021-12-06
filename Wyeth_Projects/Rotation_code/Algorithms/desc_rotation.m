@@ -164,7 +164,9 @@ function R_est = desc_rotation(Ind, RijMat, params)
 
     % kick gradient
 %     kick_factor = 1;
-     
+
+    patience = 50;
+    misses = 0;
     for iter = 1:learning_iters
            for l = 1:m_pos % for each edge ij 
                IJ = CoDeg_pos_ind(l);
@@ -174,6 +176,23 @@ function R_est = desc_rotation(Ind, RijMat, params)
            end   
 
            grad_long = S_vec(Ind_jk)+S_vec(Ind_ki)+(sum_ikj+sum_jki).*S0_long;
+           
+           % projection (can do this before or after gradient acceleration)
+           for l = 1:m_pos
+               IJ = CoDeg_pos_ind(l);
+               nsample = CoDeg_vec_pos(l);
+               nv = ones(1,nsample)/(nsample^0.5);
+               grad = grad_long((cum_ind(l)+1):cum_ind(l+1));
+               
+               % simplest "kick"
+%                grad = grad/(norm(grad)+1*10^(-8));
+               
+               if rm==1
+                    grad = grad - (grad*nv')*nv; % Riemmanian Project 
+               end
+               grad_long((cum_ind(l)+1):cum_ind(l+1)) = grad;
+           end
+           
            step_long = params.Gradient.GetStep(grad_long);
 
            % average version
@@ -189,15 +208,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
                IJ = CoDeg_pos_ind(l);
                nsample = CoDeg_vec_pos(l);
                step = step_long((cum_ind(l)+1):cum_ind(l+1));  
-               nv = ones(1,nsample)/(nsample^0.5);
                
-               % simplest "kick"
-%                grad = grad/(norm(grad)+1*10^(-8));
-               
-               if rm==1
-                    step = step - (step*nv')*nv; % Riemmanian Project 
-               end
-% 
 %                step_size  = (learning_rate/(2^fix(iter/25)));
                
                % kick gradient 
@@ -231,8 +242,7 @@ function R_est = desc_rotation(Ind, RijMat, params)
                S_vec(IJ) = wijk((cum_ind(l)+1):cum_ind(l+1)) * (S0_long((cum_ind(l)+1):cum_ind(l+1)))';
            end
 
-    average_change = mean(abs(S_vec - S_vec_last));
-    fprintf('iter %d: average change in S_vec %f\n', iter, average_change); 
+    average_change = mean(abs(S_vec - S_vec_last)); 
     
     if params.make_plots
         svec_errors(end+1) = mean(abs(params.ErrVec - S_vec));
@@ -241,6 +251,8 @@ function R_est = desc_rotation(Ind, RijMat, params)
         [~, MSE_means(end+1),MSE_medians(end+1), ~] = GlobalSOdCorrectRight(R_est, params.R_orig);
     end
     
+    fprintf('iter %d: average change in S_vec %f, objective value: %f\n', iter, average_change, obj_vals(end));
+    
     % kick gradient
 %     if average_change < 10^(-4)
 %         kick_factor = 100;
@@ -248,8 +260,16 @@ function R_est = desc_rotation(Ind, RijMat, params)
 %         kick_factor = 1;
 %     end 
     
-    if average_change < 10^(-7)
-        break 
+%     if average_change < 10^(-6) % usually 10^-7
+%         break 
+%     end
+    if iter > 1 & obj_vals(end-1) - obj_vals(end) < 10^(-7)
+        misses = misses + 1;
+        if misses >= patience
+            break
+        end
+    else 
+        misses = 0;
     end
     S_vec_last = S_vec;
     %fprintf('%d: %f\n',iter,mean(abs(S_vec - ErrVec)))
