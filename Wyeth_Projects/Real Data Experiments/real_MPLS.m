@@ -234,7 +234,7 @@ end
 [~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R_est, R_orig);
 
 
-fprintf('CEMP_IRLS_new:  mean %f median %f\n',MSE_mean, MSE_median); 
+fprintf('CEMP_MST:  mean %f median %f\n',MSE_mean, MSE_median); 
 
 
 nbin=100;
@@ -508,7 +508,7 @@ if(Iteration>=maxIters);disp('Max iterations reached');end
 [~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
 
 
-fprintf('CEMP_IRLS_new:  mean %f median %f\n',MSE_mean, MSE_median); 
+fprintf('MPLS:  mean %f median %f\n',MSE_mean, MSE_median); 
 Iteration
 
 
