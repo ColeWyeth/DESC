@@ -27,13 +27,13 @@ classdef AdamGradient < handle
             obj.v_t = (obj.beta_2 * obj.v_t) + (1 - obj.beta_2)*(grad.^2);
             corr_m_t = obj.m_t / (1 - obj.beta_1^obj.t); 
             corr_v_t = obj.v_t / (1 - obj.beta_2^obj.t);
-            %step = -obj.lr * corr_m_t ./ (sqrt(corr_v_t) + 10^(-8));
+            step = -obj.lr * corr_m_t ./ (sqrt(corr_v_t) + 10^(-8));
             
             % piecewise decay version
             %step_size = obj.lr/(2^fix(obj.t/100));
             %step = -step_size * corr_m_t ./ (sqrt(corr_v_t) + 10^(-8));
             
-            % piecewise decay version
+            % reciporical decay version
             %step_size = obj.lr/(obj.t);
             %step = -step_size * corr_m_t ./ (sqrt(corr_v_t) + 10^(-8));
         end
