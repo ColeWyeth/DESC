@@ -248,6 +248,7 @@ end
 
 cutoff = cut_ind/nbin;
 
+t_start = cputime;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % This implementation is based on the paper 
@@ -503,12 +504,12 @@ end
 
 
 if(Iteration>=maxIters);disp('Max iterations reached');end
-
+t_run = cputime - t_start;
 
 [~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
 
 
-fprintf('MPLS:  mean %f median %f\n',MSE_mean, MSE_median); 
+fprintf('MPLS:  mean %f median %f runtime %f \n',MSE_mean, MSE_median, t_run); 
 Iteration
 
 
