@@ -18,9 +18,8 @@ classdef AdamGradient < handle
         end
         function step = GetStep(obj, grad)
             if obj.t == 0 
-                grad_length = size(grad, 2);
-                obj.m_t = zeros(1, grad_length);
-                obj.v_t = zeros(1, grad_length);
+                obj.m_t = zeros(size(grad));
+                obj.v_t = zeros(size(grad));
             end
             obj.t = obj.t + 1;
             obj.m_t = (obj.beta_1 * obj.m_t) + (1 - obj.beta_1)*grad;

@@ -1,8 +1,8 @@
 rng(1);
-n_sample = 20;
+n_sample = 30;
 gcw_beta = 3;
 learning_rate = 0.01;
-learning_iters = 300;
+learning_iters = 200;
 AdjMat=data.AdjMat;
 Hmat=data.Hmat;
 G_gt=data.G_gt;
@@ -65,15 +65,17 @@ t0=cputime;
 params.n_sample = n_sample;
 params.beta = gcw_beta;
 params.iters = learning_iters;
+%params.learning_rate = 0.01;
 %params.Gradient = PiecewiseStepSize(learning_rate, 25);
-params.Gradient = AdamGradient(0.005, 0.8, 0.8); % 0.001, 0.9, 0.999
+params.Gradient = AdamGradient(0.005, 0.5, 0.95); % 0.001, 0.9, 0.999
 %params.Gradient = ConstantStepSize(learning_rate);
-params.make_plots = true;
-params.R_orig = R_orig; % to plot convergence only
-params.ErrVec = ErrVec; % to plot convergence only
+params.make_plots = false;
+%params.R_orig = R_orig; % to plot convergence only
+%params.ErrVec = ErrVec; % to plot convergence only
 
 %R_est = desc_rotation_sampled(Ind', RijMat, params);
 R_est = desc_rotation(Ind', RijMat, params);
+%R_est = desc_rotation_matrix(Ind', RijMat, params);
     
 t1=cputime-t0;
 

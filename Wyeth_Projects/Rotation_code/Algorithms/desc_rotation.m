@@ -243,12 +243,18 @@ function R_est = desc_rotation(Ind, RijMat, params)
            end
 
     average_change = mean(abs(S_vec - S_vec_last)); 
+    obj_vals(end+1) = wijk*(S_vec(Ind_jk)' + S_vec(Ind_ki)');
     
     if params.make_plots
         svec_errors(end+1) = mean(abs(params.ErrVec - S_vec));
-        obj_vals(end+1) = wijk*(S_vec(Ind_jk)' + S_vec(Ind_ki)');
         R_est = GCW(Ind, AdjMat, RijMat, S_vec);
         [~, MSE_means(end+1),MSE_medians(end+1), ~] = GlobalSOdCorrectRight(R_est, params.R_orig);
+        if mod(iter, 100) == 1
+            histogram(abs(params.ErrVec - S_vec));
+            title("iter " + string(iter) + " Svec absolute error");
+            xlabel("Absolute error");
+            ylabel("Frequency");
+        end
     end
     
     fprintf('iter %d: average change in S_vec %f, objective value: %f\n', iter, average_change, obj_vals(end));
