@@ -1,4 +1,4 @@
-rng(1);
+rng(2022);
 nsample = 50;
 beta = 1;
 beta_max = 40;

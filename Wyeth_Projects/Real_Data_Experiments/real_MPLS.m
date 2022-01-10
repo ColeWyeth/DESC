@@ -1,4 +1,4 @@
-rng(2020);
+rng(2022);
 
 nsample = 50;
 beta = 1;
@@ -142,7 +142,7 @@ R_trace = (reshape(R_cycle(1,1,:)+R_cycle(2,2,:)+R_cycle(3,3,:), [m,nsample]))';
 S0Mat = abs(acos((R_trace-1)./2))/pi;
 
 
-
+t0_CEMP = cputime;
 SVec = mean(S0Mat,1);
 SVec(~IndPosbin)=1;
 
@@ -184,11 +184,14 @@ end
 
     disp('Completed!')
 
+t_CEMP = cputime - t0_CEMP;
 
+SVec_err = mean(abs(SVec - ErrVec)); 
 
 disp('build spanning tree');
 
 
+t0_MST = cputime;
 
 Indfull_i = [Ind_i;Ind_j];
 Indfull_j = [Ind_j;Ind_i];
@@ -228,14 +231,21 @@ while sum(added)<n
     rootnodes = newroots;
 end
 
-
+t_MST = cputime - t0_MST;
 
 
 [~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R_est, R_orig);
 
+t0_GCW = cputime;
+Ind = [Ind_i Ind_j];
+R_est_GCW = GCW(Ind, AdjMat, RijMat, SVec);
+t_GCW = cputime - t0_GCW;
 
-fprintf('CEMP_MST:  mean %f median %f\n',MSE_mean, MSE_median); 
+[~, MSE_mean_GCW,MSE_median_GCW, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 
+fprintf('CEMP average SVec error: %f\n', SVec_err);
+fprintf('CEMP_MST:  mean %f median %f runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
+fprintf('CEMP_GCW: mean %f median %f runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
 
 nbin=100;
 hs_value = histcounts(SVec,0:(1/nbin):1);

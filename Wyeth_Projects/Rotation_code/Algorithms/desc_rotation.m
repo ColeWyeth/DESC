@@ -11,7 +11,7 @@
 %% Output:
 %% R_est: Estimated rotations (3x3xn)
 
-function R_est = desc_rotation(Ind, RijMat, params)
+function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
 
     % building the graph   
     Ind_i = Ind(:,1);
@@ -75,12 +75,13 @@ function R_est = desc_rotation(Ind, RijMat, params)
         % index by cycle, get rotation k to i
         IJK((cum_ind(l)+1):cum_ind(l+1)) = CoInd_ij; % index by cycle, get k
         IJK_Mat(1:CoDeg_vec_pos(l),l) =  CoInd_ij;   
-        % index by cycle number, edge (with cycles), get k
+        % index by cycle number, edge (with cycles) , get k
     end
 
     for l = 1:m_pos
         IJ = CoDeg_pos_ind(l);
         i=Ind_i(IJ); j=Ind_j(IJ);
+        % I think the below should more properly be called IL.
         IK = CoDeg_pos_ind_long(IndMat(i,IJK((cum_ind(l)+1):cum_ind(l+1))));
         % index of each ik among edges with cycles (it has a cycle through
         % j)
