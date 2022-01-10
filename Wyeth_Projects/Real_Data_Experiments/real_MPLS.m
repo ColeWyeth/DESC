@@ -243,9 +243,13 @@ t_GCW = cputime - t0_GCW;
 
 [~, MSE_mean_GCW,MSE_median_GCW, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 
-fprintf('CEMP average SVec error: %f\n', SVec_err);
-fprintf('CEMP_MST:  mean %f median %f runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
-fprintf('CEMP_GCW: mean %f median %f runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
+fid = fopen(sprintf('MPLS_%s_%s', data.datasetName, date), 'w');
+CEMP_str = sprintf('CEMP average SVec error: %f\n', SVec_err);
+fprintf(CEMP_str); fprintf(fid, CEMP_str);
+MST_str = sprintf('CEMP_MST:  mean %f median %f runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
+fprintf(MST_str); fprintf(fid, MST_str);
+GCW_str = sprintf('CEMP_GCW: mean %f median %f runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
+fprintf(GCW_str); fprintf(fid, GCW_str);
 
 nbin=100;
 hs_value = histcounts(SVec,0:(1/nbin):1);
@@ -519,7 +523,9 @@ t_run = cputime - t_start;
 [~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
 
 
-fprintf('MPLS:  mean %f median %f runtime %f \n',MSE_mean, MSE_median, t_run); 
+MPLS_str = sprintf('MPLS:  mean %f median %f runtime %f \n',MSE_mean, MSE_median, t_run); 
+fprintf(MPLS_str); fprintf(fid, MPLS_str);
+
 Iteration
 
 

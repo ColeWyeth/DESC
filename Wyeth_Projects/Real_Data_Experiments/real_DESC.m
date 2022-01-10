@@ -1,7 +1,7 @@
 rng(2022);
 n_sample = 30;
 gcw_beta = 3;
-learning_rate = 0.01;
+learning_rate = 0.005;
 learning_iters = 200;
 AdjMat=data.AdjMat;
 Hmat=data.Hmat;
@@ -67,8 +67,8 @@ params.beta = gcw_beta;
 params.iters = learning_iters;
 %params.learning_rate = 0.01;
 %params.Gradient = PiecewiseStepSize(learning_rate, 25);
-params.Gradient = AdamGradient(0.005, 0.5, 0.95); % 0.001, 0.9, 0.999
-%params.Gradient = ConstantStepSize(learning_rate);
+%params.Gradient = AdamGradient(0.005, 0.5, 0.95); % 0.001, 0.9, 0.999
+params.Gradient = ConstantStepSize(learning_rate);
 params.make_plots = true;
 params.R_orig = R_orig; % to plot convergence only
 params.ErrVec = ErrVec; % to plot convergence only
@@ -100,10 +100,13 @@ t3=cputime-t30;
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
-
-fprintf('DESC mean %f median %f runtime %f S_vec err %f\n',MSE_DESC_mean, MSE_DESC_median, t1, mean(abs(S_vec-ErrVec))); 
-fprintf('Huber mean %f median %f runtime %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
-fprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_median, t3); 
+fid = fopen(sprintf('DESC_%s_%s.txt', data.datasetName, date), 'w'); 
+desc_str = sprintf('DESC mean %f median %f runtime %f S_vec err %f\n',MSE_DESC_mean, MSE_DESC_median, t1, mean(abs(S_vec-ErrVec)));
+fprintf(desc_str); fprintf(fid, desc_str);
+huber_str = sprintf('Huber mean %f median %f runtime %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
+fprintf(huber_str); fprintf(fid, huber_str);
+l12_str = sprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_median, t3); 
+fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
 

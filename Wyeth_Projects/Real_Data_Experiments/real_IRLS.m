@@ -251,10 +251,14 @@ t3=cputime-t30;
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
+fid = fopen(sprintf('IRLS_%s_%s', data.datasetName, date), 'w');
+CEMP_str = sprintf('CEMP %f %f %f\n',MSE_CEMP_mean, MSE_CEMP_median, t1); 
+fprintf(CEMP_str); fprintf(fid, CEMP_str);
+Huber_str = sprintf('Huber %f %f %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
+fprintf(Huber_str); fprintf(fid, Huber_str);
+l12_str = sprintf('L1/2 %f %f %f\n',MSE_L12_mean, MSE_L12_median, t3); 
+fprintf(l12_str); fprintf(fid, l12_str);
 
-fprintf('CEMP %f %f %f\n',MSE_CEMP_mean, MSE_CEMP_median, t1); 
-fprintf('Huber %f %f %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
-fprintf('L1/2 %f %f %f\n',MSE_L12_mean, MSE_L12_median, t3); 
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
 
