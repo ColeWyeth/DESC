@@ -12,7 +12,8 @@ classdef PiecewiseStepSize < handle
         end
         function step = GetStep(obj, grad)
             obj.t = obj.t + 1;
-            step_size = (obj.learning_rate/(2^fix(obj.t/obj.decay_interval)));
+            %step_size = (obj.learning_rate/(2^fix(obj.t/obj.decay_interval)));
+            step_size = (obj.learning_rate/(fix(obj.t/obj.decay_interval)+1));
             step = -step_size * grad;
         end
     end

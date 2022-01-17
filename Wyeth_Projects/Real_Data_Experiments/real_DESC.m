@@ -1,8 +1,8 @@
 rng(2022);
 n_sample = 30;
 gcw_beta = 3;
-learning_rate = 0.005;
-learning_iters = 200;
+learning_rate = 1.0;
+learning_iters = 300;
 AdjMat=data.AdjMat;
 Hmat=data.Hmat;
 G_gt=data.G_gt;
@@ -66,19 +66,22 @@ params.n_sample = n_sample;
 params.beta = gcw_beta;
 params.iters = learning_iters;
 %params.learning_rate = 0.01;
-%params.Gradient = PiecewiseStepSize(learning_rate, 25);
+params.Gradient = PiecewiseStepSize(learning_rate, 25);
 %params.Gradient = AdamGradient(0.005, 0.5, 0.95); % 0.001, 0.9, 0.999
-params.Gradient = ConstantStepSize(learning_rate);
+%params.Gradient = ConstantStepSize(learning_rate);
+%params.Gradient = HybridGradient(0.01*learning_rate, 0.5, 0.95, 25);
 params.make_plots = true;
 params.R_orig = R_orig; % to plot convergence only
 params.ErrVec = ErrVec; % to plot convergence only
 
-%R_est = desc_rotation_sampled(Ind', RijMat, params);
-[R_est, S_vec] = desc_rotation(Ind', RijMat, params);
-%R_est = desc_rotation_matrix(Ind', RijMat, params);
+[R_est, S_vec] = desc_rotation_sampled(Ind', RijMat, params);
+%[R_est, S_vec] = desc_rotation(Ind', RijMat, params);
+%[R_est, S_vec] = desc_rotation_matrix(Ind', RijMat, params);
     
 t1=cputime-t0;
 
+mkdir('output')
+save(sprintf('output/S_vec_DESC_%s_%s.mat', data.datasetName, date), 'S_vec');
 
 RijMat1 = permute(RijMat, [2,1,3]);
 
@@ -100,8 +103,9 @@ t3=cputime-t30;
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
-fid = fopen(sprintf('DESC_%s_%s.txt', data.datasetName, date), 'w'); 
-desc_str = sprintf('DESC mean %f median %f runtime %f S_vec err %f\n',MSE_DESC_mean, MSE_DESC_median, t1, mean(abs(S_vec-ErrVec)));
+fid = fopen(sprintf('output/DESC_%s_%s.txt', data.datasetName, date), 'w'); 
+svec_delta = abs(S_vec-ErrVec);
+desc_str = sprintf('DESC mean %f median %f runtime %f\nSVec estimate mean error %f median %f\n',MSE_DESC_mean, MSE_DESC_median, t1, mean(svec_delta), median(svec_delta));
 fprintf(desc_str); fprintf(fid, desc_str);
 huber_str = sprintf('Huber mean %f median %f runtime %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
 fprintf(huber_str); fprintf(fid, huber_str);

@@ -270,7 +270,7 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
 %     if average_change < 10^(-6) % usually 10^-7
 %         break 
 %     end
-    if iter > 1 & obj_vals(end-1) - obj_vals(end) < 10^(-7)
+    if iter > 1 & obj_vals(end-1) - obj_vals(end) < 10^(-5)
         misses = misses + 1;
         if misses >= patience
             break

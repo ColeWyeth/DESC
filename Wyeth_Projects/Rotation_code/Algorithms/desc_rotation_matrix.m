@@ -13,9 +13,9 @@
 %% Output:
 %% R_est: Estimated rotations (3x3xn)
 
-function R_est = desc_rotation_matrix(Ind, RijMat, params)
+function [R_est, S_vec] = desc_rotation_matrix(Ind, RijMat, params)
 
-    n_sample = params.n_sample; 
+    %n_sample = params.n_sample; 
     
     % building the graph   
     Ind_i = Ind(:,1);
@@ -35,6 +35,10 @@ function R_est = desc_rotation_matrix(Ind, RijMat, params)
     CoDeg_vec(CoDeg_vec==0)=[];
     CoDeg_pos_ind = find(CoDeg_vec>0);
     CoDeg_vec_pos = CoDeg_vec(CoDeg_pos_ind);
+    
+    % we will sample roughly a quarter of the median number of cycles
+    n_sample = ceil(median(CoDeg_vec_pos)/4);
+    
     % we will use exactly n_sample cycles for each edge
     CoDeg_zero_ind = find(CoDeg_vec<0);
     m_pos = length(CoDeg_pos_ind); % number of edges with cycles
@@ -119,7 +123,7 @@ function R_est = desc_rotation_matrix(Ind, RijMat, params)
 
     S_vec_last = S_vec;
     %%%%%%%%%%%%%
-    learning_rate = params.learning_rate;%0.01;
+    %learning_rate = params.learning_rate;%0.01;
     learning_iters = params.iters;
     rm=1;
     proj=1;
@@ -132,8 +136,10 @@ function R_est = desc_rotation_matrix(Ind, RijMat, params)
     MSE_means = zeros(1,0);
     MSE_medians = zeros(1, 0);
 
+    patience = 50;
+    misses = 0;
     for iter = 1:learning_iters
-       step_size  = (learning_rate/(2^fix(iter/25)));
+       %step_size  = (learning_rate/(2^fix(iter/25)));
        %step_size  = learning_rate;
        
        for l = 1:m_pos % for each edge ij 
@@ -151,7 +157,8 @@ function R_est = desc_rotation_matrix(Ind, RijMat, params)
            grad = grad - nv'*(nv*grad); % Riemmanian Project 
        end 
 
-       wijk = wijk - step_size*grad;
+       %wijk = wijk - step_size*grad;
+       wijk = wijk + params.Gradient.GetStep(grad);
        
        wijk = SimplexProj(wijk')';
 
@@ -161,16 +168,23 @@ function R_est = desc_rotation_matrix(Ind, RijMat, params)
        end
 
         average_change = mean(abs(S_vec - S_vec_last));
-        fprintf('iter %d: average change in S_vec %f\n', iter, average_change); 
+        obj_vals(end+1) = sum(wijk.*(S_vec(Ind_jk) + S_vec(Ind_ki)), 'all');
+        
         if params.make_plots
             svec_errors(end+1) = mean(abs(params.ErrVec - S_vec));
-            obj_vals(end+1) = sum(wijk.*(S_vec(Ind_jk) + S_vec(Ind_ki)), 'all');
             R_est = GCW(Ind, AdjMat, RijMat, S_vec);
             [~, MSE_means(end+1),MSE_medians(end+1), ~] = GlobalSOdCorrectRight(R_est, params.R_orig);
         end
 
-        if average_change < 10^(-7)
-            break 
+        fprintf('iter %d: average change in S_vec %f, objective value: %f\n', iter, average_change, obj_vals(end));
+    
+        if iter > 1 & obj_vals(end-1) - obj_vals(end) < 10^(-5)
+            misses = misses + 1;
+            if misses >= patience
+                break
+            end
+        else 
+            misses = 0;
         end
         S_vec_last = S_vec;
 
