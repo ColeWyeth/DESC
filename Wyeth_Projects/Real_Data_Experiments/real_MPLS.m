@@ -243,7 +243,10 @@ t_GCW = cputime - t0_GCW;
 
 [~, MSE_mean_GCW,MSE_median_GCW, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 
-fid = fopen(sprintf('MPLS_%s_%s', data.datasetName, date), 'w');
+mkdir('output')
+save(sprintf('output/S_vec_CEMP_%s_%s.mat', data.datasetName, date), 'SVec');
+
+fid = fopen(sprintf('output/MPLS_%s_%s', data.datasetName, date), 'w');
 CEMP_str = sprintf('CEMP average SVec error: %f median: %f runtime %f\n', mean(SVec_err), median(SVec_err), t_CEMP);
 fprintf(CEMP_str); fprintf(fid, CEMP_str);
 MST_str = sprintf('CEMP_MST:  mean %f median %f total runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
