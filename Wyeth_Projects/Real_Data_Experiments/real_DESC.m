@@ -70,9 +70,9 @@ params.Gradient = PiecewiseStepSize(learning_rate, 25);
 %params.Gradient = AdamGradient(0.005, 0.5, 0.95); % 0.001, 0.9, 0.999
 %params.Gradient = ConstantStepSize(learning_rate);
 %params.Gradient = HybridGradient(0.01*learning_rate, 0.5, 0.95, 25);
-params.make_plots = true;
-params.R_orig = R_orig; % to plot convergence only
-params.ErrVec = ErrVec; % to plot convergence only
+params.make_plots = false;
+%params.R_orig = R_orig; % to plot convergence only
+%params.ErrVec = ErrVec; % to plot convergence only
 
 [R_est, S_vec] = desc_rotation_sampled(Ind', RijMat, params);
 %[R_est, S_vec] = desc_rotation(Ind', RijMat, params);

@@ -35,7 +35,7 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
     CoDeg_vec_pos = CoDeg_vec(CoDeg_pos_ind);
     
     % we will sample roughly a quarter of the median number of cycles
-    n_sample = ceil(median(CoDeg_vec_pos)/4); 
+    n_sample = max(ceil(median(CoDeg_vec_pos)/4), 30); 
     
     CoDeg_vec_pos_sampled = min(CoDeg_vec_pos, n_sample);
     % we will only use at most n_sample cycles for each edge
