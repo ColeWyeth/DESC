@@ -186,7 +186,7 @@ end
 
 t_CEMP = cputime - t0_CEMP;
 
-SVec_err = mean(abs(SVec - ErrVec)); 
+SVec_err = abs(SVec - ErrVec); 
 
 disp('build spanning tree');
 
@@ -244,11 +244,11 @@ t_GCW = cputime - t0_GCW;
 [~, MSE_mean_GCW,MSE_median_GCW, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 
 fid = fopen(sprintf('MPLS_%s_%s', data.datasetName, date), 'w');
-CEMP_str = sprintf('CEMP average SVec error: %f\n', SVec_err);
+CEMP_str = sprintf('CEMP average SVec error: %f median: %f runtime %f\n', mean(SVec_err), median(SVec_err), t_CEMP);
 fprintf(CEMP_str); fprintf(fid, CEMP_str);
-MST_str = sprintf('CEMP_MST:  mean %f median %f runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
+MST_str = sprintf('CEMP_MST:  mean %f median %f total runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
 fprintf(MST_str); fprintf(fid, MST_str);
-GCW_str = sprintf('CEMP_GCW: mean %f median %f runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
+GCW_str = sprintf('CEMP_GCW: mean %f median %f total runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
 fprintf(GCW_str); fprintf(fid, GCW_str);
 
 nbin=100;
