@@ -1,7 +1,7 @@
 rng(2022);
 n_sample = 30;
 gcw_beta = 3;
-learning_rate = 1.0;
+learning_rate = 0.01;
 learning_iters = 300;
 AdjMat=data.AdjMat;
 Hmat=data.Hmat;
