@@ -113,4 +113,7 @@ l12_str = sprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_me
 fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
+% for now I just need a csv of DESC results
+raw_results = [MSE_DESC_mean, MSE_DESC_median, mean(svec_delta), median(svec_delta), t1]; 
+dlmwrite('output/DESC_raw_results.csv', raw_results,'delimiter',',','-append');
 
