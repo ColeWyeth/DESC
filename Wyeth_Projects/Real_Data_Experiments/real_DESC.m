@@ -1,8 +1,8 @@
 rng(2022);
 n_sample = 30;
 gcw_beta = 3;
-learning_rate = 0.01;
-learning_iters = 300;
+learning_rate = 1.0;
+learning_iters = 600;
 AdjMat=data.AdjMat;
 Hmat=data.Hmat;
 G_gt=data.G_gt;
@@ -74,10 +74,12 @@ params.make_plots = false;
 %params.R_orig = R_orig; % to plot convergence only
 %params.ErrVec = ErrVec; % to plot convergence only
 
-[R_est, S_vec] = desc_rotation_sampled(Ind', RijMat, params);
+[R_est_GCW, S_vec] = desc_rotation_sampled(Ind', RijMat, params);
 %[R_est, S_vec] = desc_rotation(Ind', RijMat, params);
 %[R_est, S_vec] = desc_rotation_matrix(Ind', RijMat, params);
     
+R_est_MST = MST(Ind', RijMat, S_vec);
+
 t1=cputime-t0;
 
 mkdir('output')
@@ -98,14 +100,16 @@ t3=cputime-t30;
 %R_est_L12_CEMP = AverageL1(RijMat1,Ind, 'Rinit', R_est);
 
 %compute error
-[~, MSE_DESC_mean,MSE_DESC_median, ~] = GlobalSOdCorrectRight(R_est, R_orig);
+[~, MSE_DESC_MST_mean,MSE_DESC_MST_median, ~] = GlobalSOdCorrectRight(R_est_MST, R_orig);
+[~, MSE_DESC_GCW_mean,MSE_DESC_GCW_median, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 [~, MSE_Huber_mean, MSE_Huber_median,~] = GlobalSOdCorrectRight(R_est_Huber, R_orig);
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
 fid = fopen(sprintf('output/DESC_%s_%s.txt', data.datasetName, date), 'w'); 
 svec_delta = abs(S_vec-ErrVec);
-desc_str = sprintf('DESC mean %f median %f runtime %f\nSVec estimate mean error %f median %f\n',MSE_DESC_mean, MSE_DESC_median, t1, mean(svec_delta), median(svec_delta));
+desc_str = sprintf('DESC MST mean %f median %f, GCW mean %f median %f, runtime %f\nSVec estimate mean error %f median %f\n',...
+    MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, t1, mean(svec_delta), median(svec_delta));
 fprintf(desc_str); fprintf(fid, desc_str);
 huber_str = sprintf('Huber mean %f median %f runtime %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
 fprintf(huber_str); fprintf(fid, huber_str);
@@ -114,6 +118,6 @@ fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
 % for now I just need a csv of DESC results
-raw_results = [MSE_DESC_mean, MSE_DESC_median, mean(svec_delta), median(svec_delta), t1]; 
-dlmwrite('output/DESC_raw_results.csv', raw_results,'delimiter',',','-append');
+raw_results = [MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, mean(svec_delta), median(svec_delta), t1]; 
+dlmwrite('output/real_DESC_raw_results.csv', raw_results,'delimiter',',','-append');
 
