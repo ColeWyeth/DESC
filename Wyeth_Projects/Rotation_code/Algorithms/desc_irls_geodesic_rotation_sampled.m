@@ -437,7 +437,7 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
         %score=norm(W(2:end,2:4));
 
     end
-    toc
+    %toc
     
     R=zeros(3,3,N);
     for i=1:size(Q,1)
