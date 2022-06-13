@@ -1,12 +1,19 @@
-CEMP Repository
+# Detection and Estimation of Structural Consistency (DESC)
 
-Contains Matlab implementations for variations of the CEMP algorithm.
-Algorithms are named "CEMP_rotation_(name).m"
-Current approaches include the original CEMP, CEMP simple, gradient descent (on a quadratic),
-linear programming, and an analytical solution.
-Data can be can be gathered using RunTests.mlx, which calls AutomatedTesting.mlx.
-Data is in dated directories (e.g., Data0912). Each directory contains a detailed description
-of the data inside and how it was generated. 
+## Introduction
+
+DESC is an elegant quadratic programming approach to the problem of group synchronization. 
+
+This repo contains matlab files for implementing the method of the following paper
+
+Robust Group Synchronization via Quadratic Programming, Yunpeng Shi, Cole Wyeth, and Gilad Lerman, ICML 2022
+
+## Usage
+
+Download matlab files. 
+
+Implementations of the algorithms in the paper appear in DESC_paper/Rotation_code/Algorithms. Results for synthetic data can be reproduced by running DESC_paper/Rotation_code/Exampes/synthetic_data_experiments.m. Results for real data experiments can be reproduced by loading phototourism data and running the scripts in DESC_paper/Real_Data_Experiments.
+
 
 Creators:
 Yunpeng Shi

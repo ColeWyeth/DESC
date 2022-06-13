@@ -26,7 +26,7 @@ for q = 0.0:0.1:0.8
 
     % set DESC default parameters 
     lr = 0.01;
-    DESC_parameters.iters = 30; 
+    DESC_parameters.iters = 100; 
     DESC_parameters.learning_rate = lr;
     DESC_parameters.Gradient = ConstantStepSize(lr);
     %DESC_parameters.Gradient = AdamGradient(0.001, 0.9, 0.999); 
@@ -51,8 +51,6 @@ for q = 0.0:0.1:0.8
     % ylabel('Estimated corruption values');
 
     SVec_err = abs(ErrVec - SVec);
-    % histogram(SVec_err);
-    % title('DESC');
     DESC_SVec_mean_err = mean(SVec_err);
     DESC_SVec_median_err = median(SVec_err);
 
@@ -299,6 +297,185 @@ for q = 0.0:0.1:0.8
     CEMP_SVec_median_err = median(SVec_err);
     t_CEMP_MST = t_CEMP + t_MST;
     t_CEMP_GCW = t_CEMP + t_GCW;
+    
+    % Improved rotation recovery
+    changeThreshold=1e-3;
+    RR = permute(RijMat, [2,1,3]);
+    I = [Ind_i Ind_j]';
+    Rinit = R_est_GCW;
+    maxIters = 200;
+    delt = 1e-16;
+    quant_ratio = 1;
+    %quant_ratio_min = sum(SVec<=cutoff)/length(SVec);
+    quant_ratio_min = 0.8;
+    thresh = quantile(SVec,quant_ratio);
+    top_threshold = 1e4;
+    right_threshold = 1e-4;
+    
+    N=max(max(I));%Number of cameras or images or nodes in view graph
+    
+    
+    %Convert Rij to Quaternion form without function call
+    QQ=[RR(1,1,:)+RR(2,2,:)+RR(3,3,:)-1, RR(3,2,:)-RR(2,3,:),RR(1,3,:)-RR(3,1,:),RR(2,1,:)-RR(1,2,:)]/2;
+    QQ=reshape(QQ,4,size(QQ,3),1)';
+    QQ(:,1)=sqrt((QQ(:,1)+1)/2);
+    QQ(:,2:4)=(QQ(:,2:4)./repmat(QQ(:,1),[1,3]))/2;
+    
+    
+    %initialize
+    Q=[Rinit(1,1,:)+Rinit(2,2,:)+Rinit(3,3,:)-1, Rinit(3,2,:)-Rinit(2,3,:),Rinit(1,3,:)-Rinit(3,1,:),Rinit(2,1,:)-Rinit(1,2,:)]/2;
+    Q=reshape(Q,4,size(Q,3),1)';
+    Q(:,1)=sqrt((Q(:,1)+1)/2);
+    Q(:,2:4)=(Q(:,2:4)./repmat(Q(:,1),[1,3]))/2;
+    
+    
+    % Formation of A matrix.
+    m=size(I,2);
+    
+    i=[[1:m];[1:m]];i=i(:);
+    j=I(:);
+    s=repmat([-1;1],[m,1]);
+    k=(j~=1);
+    Amatrix=sparse(i(k),j(k)-1,s(k),m,N-1);
+    
+    w=zeros(size(QQ,1),4);W=zeros(N,4);
+    
+    score=inf;    Iteration=1;
+    
+    
+    %Weights = sqrt(exp(-tau*SVec.^2))';
+    
+    %Weights = 1./(SVec.^0.75)'; Weights(Weights>1e8)=1e8;
+    
+    Weights = (1./(SVec.^0.75)');
+    %Weights = SIGMA./(S_vec.^2+SIGMA^2)'; 
+    %Weights = ((S_vec<0.005)'); Weights(Weights>1e8)=1e8;
+    
+    %Weights = sqrt(exp(-50*SVec.^2))'.*((SVec<thresh)'); Weights(Weights>1e4)=1e4;
+    Weights(Weights>top_threshold)= top_threshold;
+    Weights(SVec>thresh)=right_threshold; 
+    
+    while((score>changeThreshold)&&(Iteration<maxIters))
+        lam = 1/(Iteration+1);
+        %lam = 1/(Iteration^2+1);
+        %lam = 0; %full residual
+        %lam = 1; %full cemp
+        %lam = 0.5;
+        %lam = exp(-Iteration);
+        
+        %tau=beta;
+        i=I(1,:);j=I(2,:);
+    
+        % w=Qij*Qi
+        w(:,:)=[ (QQ(:,1).*Q(i,1)-sum(QQ(:,2:4).*Q(i,2:4),2)),...  %scalar terms
+            repmat(QQ(:,1),[1,3]).*Q(i,2:4) + repmat(Q(i,1),[1,3]).*QQ(:,2:4) + ...   %vector terms
+            [QQ(:,3).*Q(i,4)-QQ(:,4).*Q(i,3),QQ(:,4).*Q(i,2)-QQ(:,2).*Q(i,4),QQ(:,2).*Q(i,3)-QQ(:,3).*Q(i,2)] ];   %cross product terms
+    
+        % w=inv(Qj)*w=inv(Qj)*Qij*Qi
+        w(:,:)=[ (-Q(j,1).*w(:,1)-sum(Q(j,2:4).*w(:,2:4),2)),...  %scalar terms
+            repmat(-Q(j,1),[1,3]).*w(:,2:4) + repmat(w(:,1),[1,3]).*Q(j,2:4) + ...   %vector terms
+            [Q(j,3).*w(:,4)-Q(j,4).*w(:,3),Q(j,4).*w(:,2)-Q(j,2).*w(:,4),Q(j,2).*w(:,3)-Q(j,3).*w(:,2)] ];   %cross product terms
+    
+    
+%         s2=sqrt(sum(w(:,2:4).*w(:,2:4),2));
+%         w(:,1)=2*atan2(s2,w(:,1));
+%         i=w(:,1)<-pi;  w(i,1)=w(i,1)+2*pi;  i=w(:,1)>=pi;  w(i,1)=w(i,1)-2*pi;
+%         B=w(:,2:4).*repmat(w(:,1)./s2,[1,3]);
+    % Here is an alternative solution for the above 4 lines. This may be
+    % marginally faster. But use of this is not recomended as the domain of
+    % acos is bounded which may result in truncation error when the solution
+    % comes near optima. Usage of atan2 justifies omition of explicit
+    % quaternion normalization at every stage.
+        i=w(:,1)<0;w(i,:)=-w(i,:);
+        theta2=acos(w(:,1));
+        B=((w(:,2:4).*repmat((2*theta2./sin(theta2)),[1,3])));
+        
+        
+        B(isnan(B))=0;% This tackles the devide by zero problem.
+      
+        W(1,:)=[1 0 0 0];
+        
+        %W(2:end,2:4)=Amatrix\B;
+        %if(N<=1000)
+            W(2:end,2:4)=(sparse(1:length(Weights),1:length(Weights),Weights,length(Weights),length(Weights))*Amatrix)\(repmat(Weights,[1,size(B,2)]).*B);
+        %else
+            %W(2:end,2:4)=Amatrix\B;
+        %end
+        
+         score=sum(sqrt(sum(W(2:end,2:4).*W(2:end,2:4),2)))/N;
+        
+        theta=sqrt(sum(W(:,2:4).*W(:,2:4),2));
+        W(:,1)=cos(theta/2);
+        W(:,2:4)=W(:,2:4).*repmat(sin(theta/2)./theta,[1,3]);
+        
+        W(isnan(W))=0;
+        
+        Q=[ (Q(:,1).*W(:,1)-sum(Q(:,2:4).*W(:,2:4),2)),...  %scalar terms
+            repmat(Q(:,1),[1,3]).*W(:,2:4) + repmat(W(:,1),[1,3]).*Q(:,2:4) + ...   %vector terms
+            [Q(:,3).*W(:,4)-Q(:,4).*W(:,3),Q(:,4).*W(:,2)-Q(:,2).*W(:,4),Q(:,2).*W(:,3)-Q(:,3).*W(:,2)] ];   %cross product terms
+    
+        Iteration=Iteration+1;
+       % disp(num2str([Iteration score toc]));
+       
+        R=zeros(3,3,N);
+        for i=1:size(Q,1)
+            R(:,:,i)=q2R(Q(i,:));
+        end
+    
+    
+    %[~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
+    
+    
+    %fprintf('CEMP_IRLS_new:  mean %f median %f\n',MSE_mean, MSE_median); 
+    
+        
+        E=(Amatrix*W(2:end,2:4)-B); 
+        residual_standard = sqrt(sum(E.^2,2))/pi;
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        ESVec = (1-lam)*residual_standard + lam * SVec';
+        %ESVec = residual_standard .* (lam * S_vec' + (1-lam) * ones(m,1) * mean(S_vec));
+        %ESVec = max(residual_standard, S_vec');
+        %Weights = sqrt(exp(-tau*(SVec'.^2)));
+        %Weights = 1./(ESVec+delt);
+        %Weights = (ESVec<1/tau);
+        %Weights = 1./(ESVec.^0.75); Weights(Weights>1e8)=1e8;
+        Weights = (1./(ESVec.^0.75));
+        %Weights = ((SVec<0.005)'); Weplights(Weights>1e8)=1e8;
+        %SIGMA = max(SIGMA/2, sigma_final/10);
+        %SIGMA = sigma_final/10;
+        %Weights = SIGMA./(ESVec.^2+SIGMA^2); 
+        
+        
+        %Weights = exp(-beta.*Err);
+        
+        %Weights=SIGMA./( sum(E.^2,2) + SIGMA^2 );
+        
+        %top_threshold = min(top_threshold*2, 1e4);
+        right_threshold = 1e-4;
+        quant_ratio = max(quant_ratio_min, quant_ratio-0.05);
+        thresh = quantile(ESVec,quant_ratio);
+        Weights(Weights>top_threshold)= top_threshold;
+        Weights(ESVec>thresh)=right_threshold; 
+        %G=2*(repmat(Weights.*Weights,[1,size(Amatrix,2)]).*Amatrix)'*E;
+        %G=2*Amatrix'*sparse(1:length(Weights),1:length(Weights),Weights.*Weights,length(Weights),length(Weights))*E;
+        
+        %score=norm(W(2:end,2:4));
+
+    end
+    %toc
+    
+    R=zeros(3,3,N);
+    for i=1:size(Q,1)
+        R(:,:,i)=q2R(Q(i,:));
+    end
+    
+    
+    if(Iteration>=maxIters);disp('Max iterations reached');end
+
+    R_CEMP_geodesic = R;
+    [~, CEMP_geodesic_MSE_mean,CEMP_geodesic_MSE_median, ~] = GlobalSOdCorrectRight(R_CEMP_geodesic, R_orig);
+    % end of the code for geodesic CEMP
 
     nbin=100;
     hs_value = histcounts(SVec,0:(1/nbin):1);
@@ -573,13 +750,13 @@ for q = 0.0:0.1:0.8
 
     Iteration
 
-    t_start = cputime;
-    [R_linprog, linprog_svec] = linprog_sij(Ind, RijMat);
-    [~, ~, mean_error_linprog, median_error_linprog] = Rotation_Alignment(R_linprog, R_orig);
-    t_linprog = cputime - t_start;
-    
-    linprog_svec_err = abs(ErrVec - linprog_svec);
-    fprintf('Linprog SVec error mean %f median %f\n', mean(linprog_svec_err), median(linprog_svec_err));
+%     t_start = cputime;
+%     [R_linprog, linprog_svec] = linprog_sij(Ind, RijMat);
+%     [~, ~, mean_error_linprog, median_error_linprog] = Rotation_Alignment(R_linprog, R_orig);
+%     t_linprog = cputime - t_start;
+%     
+%     linprog_svec_err = abs(ErrVec - linprog_svec);
+%     fprintf('Linprog SVec error mean %f median %f\n', mean(linprog_svec_err), median(linprog_svec_err));
 
     fprintf('DESC SVec error mean %f median %f\n', DESC_SVec_mean_err, DESC_SVec_median_err);
     fprintf('CEMP SVec error mean %f median %f\n', CEMP_SVec_mean_err, CEMP_SVec_median_err);
@@ -602,6 +779,7 @@ for q = 0.0:0.1:0.8
     Results(5,:)={'IRLS-L1/2', MSE_L12_mean, MSE_L12_median, L12_time};
     Results(6,:)={'CEMP-MST', MST_MSE_mean, MST_MSE_median, t_CEMP_MST};
     Results(7,:)={'CEMP-GCW', GCW_MSE_mean, GCW_MSE_median, t_CEMP_GCW};
+    Results(8,:)={'CEMP-geodesic', CEMP_geodesic_MSE_mean, CEMP_geodesic_MSE_median, -1};
     Results(8,:)={'MPLS', MPLS_MSE_mean, MPLS_MSE_median, t_run};
     %Results(9,:)={'Linear programming', mean_error_linprog, median_error_linprog, t_linprog};
 
@@ -614,10 +792,11 @@ for q = 0.0:0.1:0.8
         MSE_L12_mean, MSE_L12_median, L12_time,...
         MST_MSE_mean, MST_MSE_median, t_CEMP_MST,...
         GCW_MSE_mean, GCW_MSE_median, t_CEMP_GCW,...
+        CEMP_geodesic_MSE_mean, CEMP_geodesic_MSE_median,...
         CEMP_SVec_mean_err, CEMP_SVec_median_err,...
-        MPLS_MSE_mean, MPLS_MSE_median, t_run,...
-        mean_error_linprog, median_error_linprog, mean(linprog_svec_err), median(linprog_svec_err), t_linprog];
-    dlmwrite('synthetic_raw_results_geodesic.csv', raw_results,'delimiter',',','-append');
+        MPLS_MSE_mean, MPLS_MSE_median, t_run];
+        %mean_error_linprog, median_error_linprog, mean(linprog_svec_err), median(linprog_svec_err), t_linprog];
+    dlmwrite('synthetic_raw_results.csv', raw_results,'delimiter',',','-append');
 
     Results
 end
