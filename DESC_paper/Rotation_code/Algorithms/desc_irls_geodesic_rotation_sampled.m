@@ -209,7 +209,6 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
                IJ = CoDeg_pos_ind(l);
                nsample = CoDeg_vec_pos_sampled(l);
                w_new = wijk((cum_ind(l)+1):cum_ind(l+1));
-               % MAKE THIS FASTER
                if proj==1
                        % proj to simplex
                        w = sort(w_new); 
@@ -244,12 +243,6 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
         misses = misses + 1;
         if misses >= patience
             break
-%             if params.Gradient.strategy == 0
-%                 params.Gradient.stopAdam;
-%                 misses = 0;
-%             else
-%                 break
-%             end
         end
     else 
         misses = 0;

@@ -175,6 +175,7 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
     patience = 30;
     misses = 0;
     for iter = 1:learning_iters
+           %tic; 
            %step_size  = (learning_rate/(2^fix(iter/25)));
            %step_size  = learning_rate;
            for l = 1:m_pos % for each edge ij 
@@ -204,7 +205,6 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
                IJ = CoDeg_pos_ind(l);
                nsample = CoDeg_vec_pos_sampled(l);
                w_new = wijk((cum_ind(l)+1):cum_ind(l+1));
-               % MAKE THIS FASTER
                if proj==1
                        % proj to simplex
                        w = sort(w_new); 
@@ -239,12 +239,6 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
         misses = misses + 1;
         if misses >= patience
             break
-%             if params.Gradient.strategy == 0
-%                 params.Gradient.stopAdam;
-%                 misses = 0;
-%             else
-%                 break
-%             end
         end
     else 
         misses = 0;
@@ -252,20 +246,30 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
     S_vec_last = S_vec;
     %fprintf('%d: %f\n',iter,mean(abs(S_vec - ErrVec)))
     %meanErrors(iter) = mean(abs(S_vec - ErrVec));
-
+    %one_iter_runtime = toc; 
+    %fprintf('one iteration runtime: %f\n', one_iter_runtime);
     end
 
     R_est = GCW(Ind, AdjMat, RijMat, S_vec);
     
     if params.make_plots
         figure
+        
+%         plot(1:10, log10(MSE_means(:, 1:10)));
+%         title('Convergence of Rotation Estimate, Mean Error (q=0.3)');
+%         xlabel('Iteration number');
+%         ylabel('log mean error in R estimate (degrees)');
+        dlmwrite('linear_convergence_rotation_error.csv', MSE_means,'delimiter',',','-append');
+        dlmwrite('linear_convergence_svec_error.csv', svec_errors,'delimiter',',','-append');
+        ylim([0 10]);
+        
         tiledlayout(2,2);
         
         nexttile
-        plot(svec_errors);
+        plot(log10(svec_errors));
         title('Convergence of Corruption Estimate Vector (SVec, sampled)');
         xlabel('Iteration number');
-        ylabel('Average distance to true corruption');
+        ylabel('log average distance to true corruption');
         
         nexttile
         plot(obj_vals);
@@ -274,11 +278,11 @@ function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
         ylabel('Value of Objective Function');
         
         nexttile
-        plot(MSE_means);
+        plot(log10(MSE_means));
         title('Convergence of Rotation Estimate, Mean (sampled)');
         xlabel('Iteration number');
-        ylabel('Mean Error in R estimate (degrees)');
-        ylim([0 inf]);
+        ylabel('log mean error in R estimate (degrees)');
+        %ylim([0 inf]);
         
         nexttile
         plot(MSE_medians);

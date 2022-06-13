@@ -150,22 +150,6 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
     MSE_means = zeros(1,0);
     MSE_medians = zeros(1,0);
 
-    % average version
-%     past_grads = zeros(0, m_cycle);
-%     num_averaged = 3;
-    
-    % heavy ball
-    % First-order methods for minimizing smooth functions
-    % Yuekai Sun, Stanford
-    % Attributes this to Polyak, 1964
-    % Some methods of speeding up the convergence of iteration
-    % methods
-%     prev_wijk = wijk; % the extra term zeros out first iteration
-%     heaviness = 0.3;
-
-    % kick gradient
-%     kick_factor = 1;
-
     patience = 50;
     misses = 0;
     for iter = 1:learning_iters
@@ -185,8 +169,6 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
                nv = ones(1,nsample)/(nsample^0.5);
                grad = grad_long((cum_ind(l)+1):cum_ind(l+1));
                
-               % simplest "kick"
-%                grad = grad/(norm(grad)+1*10^(-8));
                
                if rm==1
                     grad = grad - (grad*nv')*nv; % Riemmanian Project 
@@ -195,14 +177,6 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
            end
            
            step_long = params.Gradient.GetStep(grad_long);
-
-           % average version
-%            past_grads(end+1, :) = grad_long;
-%            if size(past_grads,1) > num_averaged
-%               past_grads = past_grads(2:end, :); 
-%            end
-%            grad_long = mean(past_grads, 1); 
-           % grad long is actually a misnomer now
            
            
            for l = 1:m_pos
@@ -211,16 +185,6 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
                step = step_long((cum_ind(l)+1):cum_ind(l+1));  
                
 %                step_size  = (learning_rate/(2^fix(iter/25)));
-               
-               % kick gradient 
-%                step_size = kick_factor*step_size;
-               
-               %heavy ball
-%                range_l = (cum_ind(l)+1):cum_ind(l+1);
-%                curr_wijk = wijk(range_l); % effectively a temp variable
-%                w_new = ...
-%                wijk(range_l) - step_size * grad + heaviness*(wijk(range_l) - prev_wijk(range_l)); 
-%                prev_wijk(range_l) = curr_wijk; 
                
                w_new = ...
                wijk((cum_ind(l)+1):cum_ind(l+1)) + step;
@@ -260,16 +224,6 @@ function [R_est, S_vec] = desc_rotation(Ind, RijMat, params)
     
     fprintf('iter %d: average change in S_vec %f, objective value: %f\n', iter, average_change, obj_vals(end));
     
-    % kick gradient
-%     if average_change < 10^(-4)
-%         kick_factor = 100;
-%     else
-%         kick_factor = 1;
-%     end 
-    
-%     if average_change < 10^(-6) % usually 10^-7
-%         break 
-%     end
     if iter > 1 & obj_vals(end-1) - obj_vals(end) < 10^(-5)
         misses = misses + 1;
         if misses >= patience
