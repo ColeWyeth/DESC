@@ -29,17 +29,13 @@ for q = 0.0:0.1:0.8
     DESC_parameters.iters = 100; 
     DESC_parameters.learning_rate = lr;
     DESC_parameters.Gradient = ConstantStepSize(lr);
-    %DESC_parameters.Gradient = AdamGradient(0.001, 0.9, 0.999); 
     DESC_parameters.beta = 3; % for gcw
     DESC_parameters.make_plots = false;
     %DESC_parameters.R_orig = R_orig;
     %DESC_parameters.ErrVec = ErrVec;
 
     tic;
-    %R_DESC = desc_rotation(Ind, RijMat, DESC_parameters); 
-    %[R_DESC_GCW, SVec] = desc_rotation_sampled(Ind, RijMat, DESC_parameters);
-    %R_DESC_MATRIX = desc_rotation_matrix(Ind, RijMat, DESC_parameters);
-    [R_DESC_GCW, R_DESC_geodesic, SVec] = desc_irls_geodesic_rotation_sampled(Ind, RijMat, DESC_parameters);
+    [R_DESC_GCW, R_DESC_geodesic, SVec] = DESC_PGD(Ind, RijMat, DESC_parameters);
 
     R_DESC_MST = MST(Ind, RijMat, SVec); 
 
@@ -215,17 +211,6 @@ for q = 0.0:0.1:0.8
     t_CEMP = cputime - t0_CEMP;
 
     SVec_err = abs(SVec - ErrVec); 
-    % clf;
-    % histogram(SVec_err);
-    % xlabel('True corruption values');
-    % ylabel('Estimated corruption values');
-    % title('CEMP');
-
-    % hold on;
-    % scatter(ErrVec, SVec, 'filled', 'DisplayName', 'CEMP');
-    % xlabel('True corruption values');
-    % ylabel('Estimated corruption values');
-    % legend('Location', 'northwest');
 
     disp('build spanning tree');
 
@@ -281,17 +266,6 @@ for q = 0.0:0.1:0.8
     t_GCW = cputime - t0_GCW;
 
     [~, GCW_MSE_mean,GCW_MSE_median, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
-
-    % mkdir('output')
-    % save(sprintf('output/S_vec_CEMP_%s_%s.mat', data.datasetName, date), 'SVec');
-    % 
-    % fid = fopen(sprintf('output/MPLS_%s_%s', data.datasetName, date), 'w');
-    % CEMP_str = sprintf('CEMP average SVec error: %f median: %f runtime %f\n', mean(SVec_err), median(SVec_err), t_CEMP);
-    % fprintf(CEMP_str); fprintf(fid, CEMP_str);
-    % MST_str = sprintf('CEMP_MST:  mean %f median %f total runtime %f\n',MSE_mean, MSE_median, t_CEMP + t_MST); 
-    % fprintf(MST_str); fprintf(fid, MST_str);
-    % GCW_str = sprintf('CEMP_GCW: mean %f median %f total runtime %f\n', MSE_mean_GCW, MSE_median_GCW, t_CEMP + t_GCW);
-    % fprintf(GCW_str); fprintf(fid, GCW_str);
 
     CEMP_SVec_mean_err = mean(SVec_err);
     CEMP_SVec_median_err = median(SVec_err);

@@ -74,10 +74,7 @@ params.make_plots = false;
 %params.R_orig = R_orig; % to plot convergence only
 %params.ErrVec = ErrVec; % to plot convergence only
 
-[R_est_GCW, R_est_DESC_geodesic, S_vec] = desc_irls_geodesic_rotation_sampled(Ind', RijMat, params);
-%[R_est_GCW, S_vec] = desc_rotation_sampled(Ind', RijMat, params);
-%[R_est, S_vec] = desc_rotation(Ind', RijMat, params);
-%[R_est, S_vec] = desc_rotation_matrix(Ind', RijMat, params);
+[R_est_GCW, R_est_DESC_geodesic, S_vec] = DESC_PGD(Ind', RijMat, params);
     
 R_est_MST = MST(Ind', RijMat, S_vec);
 

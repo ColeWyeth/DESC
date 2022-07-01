@@ -1,5 +1,5 @@
 % parameters with uniform topology
-n=100; p=0.5; q=0.4; sigma=0.2; model='uniform';
+n=100; p=0.5; q=0.4; sigma=0.0; model='uniform';
 % parameters with nonuniform topology
 p_node_crpt=0.5; p_edge_crpt=0.75; sigma_in=0.5; sigma_out=4; crpt_type='adv';
 
@@ -22,8 +22,11 @@ ErrVec = model_out.ErrVec; % ground truth corruption levels
 R_orig = model_out.R_orig; % ground truth rotations
 
 % set DESC default parameters 
-DESC_parameters.iters = 100; 
-DESC_parameters.learning_rate = 0.01;
+lr = 1;
+DESC_parameters.iters = 300; 
+DESC_parameters.learning_rate = lr;
+DESC_parameters.Gradient = PiecewiseStepSize(lr, 25);
+%DESC_parameters.Gradient = AdamGradient(0.001, 0.9, 0.999); 
 DESC_parameters.beta = final_beta;
 DESC_parameters.n_sample = 15;
 DESC_parameters.make_plots = true;

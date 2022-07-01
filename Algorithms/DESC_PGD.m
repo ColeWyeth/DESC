@@ -11,7 +11,7 @@
 %% Output:
 %% R_est: Estimated rotations (3x3xn)
 
-function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMat, params)
+function [R_init, R_est, S_vec] = DESC(Ind, RijMat, params)
 
     %n_sample = params.n_sample; 
     
@@ -209,6 +209,7 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
                IJ = CoDeg_pos_ind(l);
                nsample = CoDeg_vec_pos_sampled(l);
                w_new = wijk((cum_ind(l)+1):cum_ind(l+1));
+               % MAKE THIS FASTER
                if proj==1
                        % proj to simplex
                        w = sort(w_new); 
@@ -243,6 +244,12 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
         misses = misses + 1;
         if misses >= patience
             break
+%             if params.Gradient.strategy == 0
+%                 params.Gradient.stopAdam;
+%                 misses = 0;
+%             else
+%                 break
+%             end
         end
     else 
         misses = 0;
@@ -253,199 +260,57 @@ function [R_init, R_est, S_vec] = desc_irls_geodesic_rotation_sampled(Ind, RijMa
 
     end
 
+    R_est = GCW(Ind, AdjMat, RijMat, S_vec);
 
-    nbin=ceil(m/10);
-    hs_value = histcounts(S_vec,0:(1/nbin):1);
-    [~, hs_peak] = max(hs_value);
-    inflection_pt = hs_peak/nbin*2;
-    sigma_final = inflection_pt * sqrt(3);
-    SIGMA = 0.1;
-    %SIGMA = sigma_final/10
-
-    niter = 100;
-    %R_est_GCW = GCW_GM(Ind, AdjMat, RijMat, S_vec, SIGMA);
-    R_est_GCW = GCW(Ind, AdjMat, RijMat, S_vec);
-
-    changeThreshold=1e-3;
-    RR = permute(RijMat, [2,1,3]);
-    I = [Ind_i Ind_j]';
-    Rinit = R_est_GCW;
-    maxIters = 200;
-    delt = 1e-16;
+    RR = permute(RijMat, [2,1,3]); % relative rotations -- take transpose as the original LAA code estimates R' in our setting
+    Ind_T = Ind'; % indices matrix
+    R_init = R_est; % use CEMP+MST as initialization for R        
+    % Formation of A matrix.
+    Amatrix = Build_Amatrix(Ind_T); % A matrix for least squares solver (by AVISHEK CHATTERJEE)      
+    Q = R2Q(R_init); % Transfer to quoternion representation (by AVISHEK CHATTERJEE)  
+    QQ = R2Q(RR); % Transfer to quoternion representation (by AVISHEK CHATTERJEE)  
+    score=inf;    Iteration=1; stop_threshold=1e-3; maxIters=100;
+    
     quant_ratio = 1;
-    %quant_ratio_min = sum(SVec<=cutoff)/length(SVec);
     quant_ratio_min = 0.8;
     thresh = quantile(S_vec,quant_ratio);
-    top_threshold = 1e4;
-    right_threshold = 1e-4;
-    
-    N=max(max(I));%Number of cameras or images or nodes in view graph
-    
-    
-    %Convert Rij to Quaternion form without function call
-    QQ=[RR(1,1,:)+RR(2,2,:)+RR(3,3,:)-1, RR(3,2,:)-RR(2,3,:),RR(1,3,:)-RR(3,1,:),RR(2,1,:)-RR(1,2,:)]/2;
-    QQ=reshape(QQ,4,size(QQ,3),1)';
-    QQ(:,1)=sqrt((QQ(:,1)+1)/2);
-    QQ(:,2:4)=(QQ(:,2:4)./repmat(QQ(:,1),[1,3]))/2;
-    
-    
-    %initialize
-    Q=[Rinit(1,1,:)+Rinit(2,2,:)+Rinit(3,3,:)-1, Rinit(3,2,:)-Rinit(2,3,:),Rinit(1,3,:)-Rinit(3,1,:),Rinit(2,1,:)-Rinit(1,2,:)]/2;
-    Q=reshape(Q,4,size(Q,3),1)';
-    Q(:,1)=sqrt((Q(:,1)+1)/2);
-    Q(:,2:4)=(Q(:,2:4)./repmat(Q(:,1),[1,3]))/2;
-    
-    
-    % Formation of A matrix.
-    m=size(I,2);
-    
-    i=[[1:m];[1:m]];i=i(:);
-    j=I(:);
-    s=repmat([-1;1],[m,1]);
-    k=(j~=1);
-    Amatrix=sparse(i(k),j(k)-1,s(k),m,N-1);
-    
-    w=zeros(size(QQ,1),4);W=zeros(N,4);
-    
-    score=inf;    Iteration=1;
-    
-    
-    %Weights = sqrt(exp(-tau*SVec.^2))';
-    
-    %Weights = 1./(SVec.^0.75)'; Weights(Weights>1e8)=1e8;
-    
+    % initialization edge weights using (sij) estimated by CEMP
     Weights = (1./(S_vec.^0.75)');
-    %Weights = SIGMA./(S_vec.^2+SIGMA^2)'; 
-    %Weights = ((S_vec<0.005)'); Weights(Weights>1e8)=1e8;
-    
-    %Weights = sqrt(exp(-50*SVec.^2))'.*((SVec<thresh)'); Weights(Weights>1e4)=1e4;
-    Weights(Weights>top_threshold)= top_threshold;
-    Weights(S_vec>thresh)=right_threshold; 
-    
-    while((score>changeThreshold)&&(Iteration<maxIters))
+    weight_max = 1e4; % weights cannot be too large nor too small (for numerical stability and graph connectivity)
+    weight_min = 1e-4;      
+    Weights(Weights>weight_max)= weight_max;
+    Weights(S_vec>thresh)=weight_min; 
+    disp('Rotation Initialized!')
+    disp('Start DESC refinement ...')
+    % start DESC refinement iterations
+
+    while((score>stop_threshold)&&(Iteration<maxIters))
         lam = 1/(Iteration+1);
-        %lam = 1/(Iteration^2+1);
-        %lam = 0; %full residual
-        %lam = 1; %full cemp
-        %lam = 0.5;
-        %lam = exp(-Iteration);
-        
-        %tau=beta;
-        i=I(1,:);j=I(2,:);
-    
-        % w=Qij*Qi
-        w(:,:)=[ (QQ(:,1).*Q(i,1)-sum(QQ(:,2:4).*Q(i,2:4),2)),...  %scalar terms
-            repmat(QQ(:,1),[1,3]).*Q(i,2:4) + repmat(Q(i,1),[1,3]).*QQ(:,2:4) + ...   %vector terms
-            [QQ(:,3).*Q(i,4)-QQ(:,4).*Q(i,3),QQ(:,4).*Q(i,2)-QQ(:,2).*Q(i,4),QQ(:,2).*Q(i,3)-QQ(:,3).*Q(i,2)] ];   %cross product terms
-    
-        % w=inv(Qj)*w=inv(Qj)*Qij*Qi
-        w(:,:)=[ (-Q(j,1).*w(:,1)-sum(Q(j,2:4).*w(:,2:4),2)),...  %scalar terms
-            repmat(-Q(j,1),[1,3]).*w(:,2:4) + repmat(w(:,1),[1,3]).*Q(j,2:4) + ...   %vector terms
-            [Q(j,3).*w(:,4)-Q(j,4).*w(:,3),Q(j,4).*w(:,2)-Q(j,2).*w(:,4),Q(j,2).*w(:,3)-Q(j,3).*w(:,2)] ];   %cross product terms
-    
-    
-        s2=sqrt(sum(w(:,2:4).*w(:,2:4),2));
-        w(:,1)=2*atan2(s2,w(:,1));
-        i=w(:,1)<-pi;  w(i,1)=w(i,1)+2*pi;  i=w(:,1)>=pi;  w(i,1)=w(i,1)-2*pi;
-        B=w(:,2:4).*repmat(w(:,1)./s2,[1,3]);
-    % Here is an alternative solution for the above 4 lines. This may be
-    % marginally faster. But use of this is not recomended as the domain of
-    % acos is bounded which may result in truncation error when the solution
-    % comes near optima. Usage of atan2 justifies omition of explicit
-    % quaternion normalization at every stage.
-    %     i=w(:,1)<0;w(i,:)=-w(i,:);
-    %     theta2=acos(w(:,1));
-    %     B=((w(:,2:4).*repmat((2*theta2./sin(theta2)),[1,3])));
-        
-        
-        B(isnan(B))=0;% This tackles the devide by zero problem.
-      
-        W(1,:)=[1 0 0 0];
-        
-        %W(2:end,2:4)=Amatrix\B;
-        %if(N<=1000)
-            W(2:end,2:4)=(sparse(1:length(Weights),1:length(Weights),Weights,length(Weights),length(Weights))*Amatrix)\(repmat(Weights,[1,size(B,2)]).*B);
-        %else
-            %W(2:end,2:4)=Amatrix\B;
-        %end
-        
-         score=sum(sqrt(sum(W(2:end,2:4).*W(2:end,2:4),2)))/N;
-        
-        theta=sqrt(sum(W(:,2:4).*W(:,2:4),2));
-        W(:,1)=cos(theta/2);
-        W(:,2:4)=W(:,2:4).*repmat(sin(theta/2)./theta,[1,3]);
-        
-        W(isnan(W))=0;
-        
-        Q=[ (Q(:,1).*W(:,1)-sum(Q(:,2:4).*W(:,2:4),2)),...  %scalar terms
-            repmat(Q(:,1),[1,3]).*W(:,2:4) + repmat(W(:,1),[1,3]).*Q(:,2:4) + ...   %vector terms
-            [Q(:,3).*W(:,4)-Q(:,4).*W(:,3),Q(:,4).*W(:,2)-Q(:,2).*W(:,4),Q(:,2).*W(:,3)-Q(:,3).*W(:,2)] ];   %cross product terms
-    
-        Iteration=Iteration+1;
-       % disp(num2str([Iteration score toc]));
-       
-        R=zeros(3,3,N);
-        for i=1:size(Q,1)
-            R(:,:,i)=q2R(Q(i,:));
-        end
-    
-    
-    %[~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
-    
-    
-    %fprintf('CEMP_IRLS_new:  mean %f median %f\n',MSE_mean, MSE_median); 
-    
-        
+         % one iteration of Weighted Lie-Algebraic Averaging (by AVISHEK CHATTERJEE)                
+        [Q,W,B,score] = Weighted_LAA(Ind_T,Q,QQ,Amatrix,Weights); 
         E=(Amatrix*W(2:end,2:4)-B); 
-        residual_standard = sqrt(sum(E.^2,2))/pi;
-
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        ESVec = (1-lam)*residual_standard + lam * S_vec';
-        %ESVec = residual_standard .* (lam * S_vec' + (1-lam) * ones(m,1) * mean(S_vec));
-        %ESVec = max(residual_standard, S_vec');
-        %Weights = sqrt(exp(-tau*(SVec'.^2)));
-        %Weights = 1./(ESVec+delt);
-        %Weights = (ESVec<1/tau);
-        %Weights = 1./(ESVec.^0.75); Weights(Weights>1e8)=1e8;
-        Weights = (1./(ESVec.^0.75));
-        %Weights = ((SVec<0.005)'); Weplights(Weights>1e8)=1e8;
-        %SIGMA = max(SIGMA/2, sigma_final/10);
-        %SIGMA = sigma_final/10;
-        %Weights = SIGMA./(ESVec.^2+SIGMA^2); 
+        ResVec = sqrt(sum(E.^2,2))/pi; % normalized residual rij for all edges
+        RSVec = (1-lam)*ResVec + lam * S_vec';
         
-        
-        %Weights = exp(-beta.*Err);
-        
-        %Weights=SIGMA./( sum(E.^2,2) + SIGMA^2 );
-        
-        %top_threshold = min(top_threshold*2, 1e4);
-        right_threshold = 1e-4;
+        % The following commented line is optional:  
+        % RSVec(~IndPosbin)=1;
+     
+        Weights = (1./(RSVec.^0.75)); % compute edge weights
+        % additional truncation for edge weights
         quant_ratio = max(quant_ratio_min, quant_ratio-0.05);
-        thresh = quantile(ESVec,quant_ratio);
-        Weights(Weights>top_threshold)= top_threshold;
-        Weights(ESVec>thresh)=right_threshold; 
-        %G=2*(repmat(Weights.*Weights,[1,size(Amatrix,2)]).*Amatrix)'*E;
-        %G=2*Amatrix'*sparse(1:length(Weights),1:length(Weights),Weights.*Weights,length(Weights),length(Weights))*E;
-        
-        %score=norm(W(2:end,2:4));
-
+        thresh = quantile(RSVec,quant_ratio);
+        Weights(Weights>weight_max)= weight_max;
+        Weights(RSVec>thresh)=weight_min;
+        % report the change of estimated rotations (stop when the change is small) 
+        fprintf('Iter %d: ||\x394R||= %f\n', Iteration, score); 
+        Iteration = Iteration+1;        
     end
-    %toc
-    
-    R=zeros(3,3,N);
+    % transform from quaternion and return the estimated rotations
+    R_est=zeros(3,3,n);
     for i=1:size(Q,1)
-        R(:,:,i)=q2R(Q(i,:));
-    end
-    
-    
-    if(Iteration>=maxIters);disp('Max iterations reached');end
-
-   R_est = R;
-   R_init = R_est_GCW;
-    
-    
-
-Iteration
+        R_est(:,:,i)=q2R(Q(i,:));
+    end 
+    disp('DONE!')
     
     if params.make_plots
         figure
@@ -453,7 +318,7 @@ Iteration
         
         nexttile
         plot(svec_errors);
-        title('Convergence of Corruption Estimate Vector (SVec, sampled)');
+        title('Convergence of Corruption Estimate Vector (S_vec, sampled)');
         xlabel('Iteration number');
         ylabel('Average distance to true corruption');
         
