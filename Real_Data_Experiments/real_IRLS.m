@@ -237,7 +237,7 @@ Ind = [Ind_i Ind_j]';
 plot( SVec,ErrVec, 'r.')
 
 t20 = cputime;
-R_est_Huber = AverageSO3Graph(RijMat1, Ind);
+R_est_GM = AverageSO3Graph(RijMat1, Ind);
 t2 = cputime-t20;
 
 t30=cputime;
@@ -247,15 +247,15 @@ t3=cputime-t30;
 
 %compute error
 [~, MSE_CEMP_mean,MSE_CEMP_median, ~] = GlobalSOdCorrectRight(R_est, R_orig);
-[~, MSE_Huber_mean, MSE_Huber_median,~] = GlobalSOdCorrectRight(R_est_Huber, R_orig);
+[~, MSE_GM_mean, MSE_GM_median,~] = GlobalSOdCorrectRight(R_est_GM, R_orig);
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
 fid = fopen(sprintf('IRLS_%s_%s', data.datasetName, date), 'w');
 CEMP_str = sprintf('CEMP %f %f %f\n',MSE_CEMP_mean, MSE_CEMP_median, t1); 
 fprintf(CEMP_str); fprintf(fid, CEMP_str);
-Huber_str = sprintf('Huber %f %f %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
-fprintf(Huber_str); fprintf(fid, Huber_str);
+GM_str = sprintf('GM %f %f %f\n',MSE_GM_mean, MSE_GM_median, t2); 
+fprintf(GM_str); fprintf(fid, GM_str);
 l12_str = sprintf('L1/2 %f %f %f\n',MSE_L12_mean, MSE_L12_median, t3); 
 fprintf(l12_str); fprintf(fid, l12_str);
 

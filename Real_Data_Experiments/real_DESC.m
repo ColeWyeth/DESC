@@ -89,7 +89,7 @@ RijMat1 = permute(RijMat, [2,1,3]);
 %plot( S_vec,ErrVec, 'r.')
 
 t20 = cputime;
-R_est_Huber = AverageSO3Graph(RijMat1, Ind);
+R_est_GM = AverageSO3Graph(RijMat1, Ind);
 t2 = cputime-t20;
 
 t30=cputime;
@@ -101,7 +101,7 @@ t3=cputime-t30;
 [~, MSE_DESC_geodesic_mean,MSE_DESC_geodesic_median, ~] = GlobalSOdCorrectRight(R_est_DESC_geodesic, R_orig);
 [~, MSE_DESC_MST_mean,MSE_DESC_MST_median, ~] = GlobalSOdCorrectRight(R_est_MST, R_orig);
 [~, MSE_DESC_GCW_mean,MSE_DESC_GCW_median, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
-[~, MSE_Huber_mean, MSE_Huber_median,~] = GlobalSOdCorrectRight(R_est_Huber, R_orig);
+[~, MSE_GM_mean, MSE_GM_median,~] = GlobalSOdCorrectRight(R_est_GM, R_orig);
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
 %[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
 
@@ -110,8 +110,8 @@ svec_delta = abs(S_vec-ErrVec);
 desc_str = sprintf('DESC Geodesic mean %f median %f MST mean %f median %f, GCW mean %f median %f, runtime %f\nSVec estimate mean error %f median %f\n',...
     MSE_DESC_geodesic_mean, MSE_DESC_geodesic_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, t1, mean(svec_delta), median(svec_delta));
 fprintf(desc_str); fprintf(fid, desc_str);
-huber_str = sprintf('Huber mean %f median %f runtime %f\n',MSE_Huber_mean, MSE_Huber_median, t2); 
-fprintf(huber_str); fprintf(fid, huber_str);
+GM_str = sprintf('GM mean %f median %f runtime %f\n',MSE_GM_mean, MSE_GM_median, t2); 
+fprintf(GM_str); fprintf(fid, GM_str);
 l12_str = sprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_median, t3); 
 fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 

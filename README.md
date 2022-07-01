@@ -10,9 +10,9 @@ Robust Group Synchronization via Quadratic Programming, Yunpeng Shi, Cole Wyeth,
 
 ## Usage
 
-Download matlab files. 
+Download matlab files. Add paths to the directories Utils, Models, and Algorithms (e.g. addpath Utils). 
 
-Implementations of the algorithms in the paper appear in DESC_paper/Rotation_code/Algorithms. Results for synthetic data can be reproduced by running DESC_paper/Rotation_code/Exampes/synthetic_data_experiments.m. Results for real data experiments can be reproduced by loading phototourism data and running the scripts in DESC_paper/Real_Data_Experiments.
+Implementations of the algorithms in the paper appear in Algorithms. Results for synthetic data can be reproduced by running Synthetic_Simulations/synthetic_data_experiments.m. Results for real data experiments can be reproduced by loading phototourism data and running the scripts in Real_Data_Experiments, particularly real_DESC and real_MPLS.
 
 
 Creators:

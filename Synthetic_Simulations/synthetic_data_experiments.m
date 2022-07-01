@@ -53,8 +53,8 @@ for q = 0.0:0.1:0.8
     RijMat1 = permute(RijMat, [2,1,3]);
 
     t20 = cputime;
-    R_est_Huber = AverageSO3Graph(RijMat1, Ind');
-    Huber_time = cputime-t20;
+    R_est_GM = AverageSO3Graph(RijMat1, Ind');
+    GM_time = cputime-t20;
 
     t30=cputime;
     R_est_L12 = AverageL1(RijMat1,Ind');
@@ -739,7 +739,7 @@ for q = 0.0:0.1:0.8
     [~, ~, mean_error_DESC_geodesic, median_error_DESC_geodesic] = Rotation_Alignment(R_DESC_geodesic, R_orig); 
     [~, ~, mean_error_DESC_GCW, median_error_DESC_GCW] = Rotation_Alignment(R_DESC_GCW, R_orig); 
     [~, ~, mean_error_DESC_MST, median_error_DESC_MST] = Rotation_Alignment(R_DESC_MST, R_orig); 
-    [~, MSE_Huber_mean, MSE_Huber_median,~] = GlobalSOdCorrectRight(R_est_Huber, R_orig);
+    [~, MSE_GM_mean, MSE_GM_median,~] = GlobalSOdCorrectRight(R_est_GM, R_orig);
     [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
     % Report estimation error
     sz = [7 4];
@@ -749,7 +749,7 @@ for q = 0.0:0.1:0.8
     Results(1,:)={'DESC-geodesic', mean_error_DESC_geodesic, median_error_DESC_geodesic, desc_time};
     Results(2,:)={'DESC-MST', mean_error_DESC_MST, median_error_DESC_MST, desc_time};
     Results(3,:)={'DESC-GCW', mean_error_DESC_GCW, median_error_DESC_GCW, desc_time};
-    Results(4,:)={'IRLS-Huber', MSE_Huber_mean, MSE_Huber_median, Huber_time};
+    Results(4,:)={'IRLS-GM', MSE_GM_mean, MSE_GM_median, GM_time};
     Results(5,:)={'IRLS-L1/2', MSE_L12_mean, MSE_L12_median, L12_time};
     Results(6,:)={'CEMP-MST', MST_MSE_mean, MST_MSE_median, t_CEMP_MST};
     Results(7,:)={'CEMP-GCW', GCW_MSE_mean, GCW_MSE_median, t_CEMP_GCW};
@@ -762,7 +762,7 @@ for q = 0.0:0.1:0.8
 
     raw_results = [mean_error_DESC_geodesic, median_error_DESC_geodesic, mean_error_DESC_MST, median_error_DESC_MST, mean_error_DESC_GCW, median_error_DESC_GCW,...
         DESC_SVec_mean_err, DESC_SVec_median_err,desc_time,... 
-        MSE_Huber_mean, MSE_Huber_median, Huber_time,... 
+        MSE_GM_mean, MSE_GM_median, GM_time,... 
         MSE_L12_mean, MSE_L12_median, L12_time,...
         MST_MSE_mean, MST_MSE_median, t_CEMP_MST,...
         GCW_MSE_mean, GCW_MSE_median, t_CEMP_GCW,...
