@@ -74,7 +74,7 @@ params.make_plots = false;
 %params.R_orig = R_orig; % to plot convergence only
 %params.ErrVec = ErrVec; % to plot convergence only
 
-[R_est_GCW, R_est_DESC_geodesic, S_vec] = DESC(Ind', RijMat, params);
+[R_est_GCW, R_est_DESC, S_vec] = DESC(Ind', RijMat, params);
     
 R_est_MST = MST(Ind', RijMat, S_vec);
 
@@ -98,7 +98,7 @@ t3=cputime-t30;
 %R_est_L12_CEMP = AverageL1(RijMat1,Ind, 'Rinit', R_est);
 
 %compute error
-[~, MSE_DESC_geodesic_mean,MSE_DESC_geodesic_median, ~] = GlobalSOdCorrectRight(R_est_DESC_geodesic, R_orig);
+[~, MSE_DESC_mean,MSE_DESC_median, ~] = GlobalSOdCorrectRight(R_est_DESC, R_orig);
 [~, MSE_DESC_MST_mean,MSE_DESC_MST_median, ~] = GlobalSOdCorrectRight(R_est_MST, R_orig);
 [~, MSE_DESC_GCW_mean,MSE_DESC_GCW_median, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 [~, MSE_GM_mean, MSE_GM_median,~] = GlobalSOdCorrectRight(R_est_GM, R_orig);
@@ -107,8 +107,8 @@ t3=cputime-t30;
 
 fid = fopen(sprintf('output/DESC_%s_%s.txt', data.datasetName, date), 'w'); 
 svec_delta = abs(S_vec-ErrVec);
-desc_str = sprintf('DESC Geodesic mean %f median %f MST mean %f median %f, GCW mean %f median %f, runtime %f\nSVec estimate mean error %f median %f\n',...
-    MSE_DESC_geodesic_mean, MSE_DESC_geodesic_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, t1, mean(svec_delta), median(svec_delta));
+desc_str = sprintf('DESC mean %f median %f MST mean %f median %f, GCW mean %f median %f, runtime %f\nSVec estimate mean error %f median %f\n',...
+    MSE_DESC_mean, MSE_DESC_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, t1, mean(svec_delta), median(svec_delta));
 fprintf(desc_str); fprintf(fid, desc_str);
 GM_str = sprintf('GM mean %f median %f runtime %f\n',MSE_GM_mean, MSE_GM_median, t2); 
 fprintf(GM_str); fprintf(fid, GM_str);
@@ -117,6 +117,6 @@ fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
 % Uncomment to save raw output
-%raw_results = [MSE_DESC_geodesic_mean, MSE_DESC_geodesic_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, mean(svec_delta), median(svec_delta), t1]; 
+%raw_results = [MSE_DESC_mean, MSE_DESC_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, mean(svec_delta), median(svec_delta), t1]; 
 %dlmwrite('output/real_DESC_raw_results.csv', raw_results,'delimiter',',','-append');
 
