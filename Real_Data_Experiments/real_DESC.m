@@ -74,7 +74,7 @@ params.make_plots = false;
 %params.R_orig = R_orig; % to plot convergence only
 %params.ErrVec = ErrVec; % to plot convergence only
 
-[R_est_GCW, R_est_DESC_geodesic, S_vec] = DESC_PGD(Ind', RijMat, params);
+[R_est_GCW, R_est_DESC_geodesic, S_vec] = DESC(Ind', RijMat, params);
     
 R_est_MST = MST(Ind', RijMat, S_vec);
 
@@ -116,6 +116,7 @@ l12_str = sprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_me
 fprintf(l12_str); fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
-raw_results = [MSE_DESC_geodesic_mean, MSE_DESC_geodesic_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, mean(svec_delta), median(svec_delta), t1]; 
-dlmwrite('output/real_DESC_raw_results.csv', raw_results,'delimiter',',','-append');
+% Uncomment to save raw output
+%raw_results = [MSE_DESC_geodesic_mean, MSE_DESC_geodesic_median, MSE_DESC_MST_mean, MSE_DESC_MST_median, MSE_DESC_GCW_mean, MSE_DESC_GCW_median, mean(svec_delta), median(svec_delta), t1]; 
+%dlmwrite('output/real_DESC_raw_results.csv', raw_results,'delimiter',',','-append');
 

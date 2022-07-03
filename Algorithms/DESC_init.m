@@ -11,7 +11,7 @@
 %% Output:
 %% R_est: Estimated rotations (3x3xn)
 
-function [R_est, S_vec] = desc_rotation_sampled(Ind, RijMat, params)
+function [R_est, S_vec] = DESC_init(Ind, RijMat, params)
 
     %n_sample = params.n_sample; 
     
