@@ -1,6 +1,5 @@
 rng(2022);
 n_sample = 30;
-gcw_beta = 3;
 learning_rate = 1.0;
 learning_iters = 30;
 AdjMat=data.AdjMat;
