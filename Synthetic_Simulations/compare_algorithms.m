@@ -1,5 +1,5 @@
 % parameters with uniform topology
-n =200; p=0.25; q=0.2; sigma=0.1; model='uniform';
+n =100; p=0.5; q=0.2; sigma=0.1; model='uniform';
 
 % generate data with uniform topology
 model_out = Uniform_Topology(n,p,q,sigma,model);
@@ -35,6 +35,7 @@ MPLS_parameters.cycle_info_ratio = 1./((1:MPLS_parameters.max_iter)+1);
 lr = 0.01;
 DESC_parameters.iters = 100; 
 DESC_parameters.learning_rate = lr;
+DESC_parameters.make_plots = false;
 DESC_parameters.Gradient = ConstantStepSize(lr);
 DESC_parameters.R_orig = R_orig;
 DESC_parameters.ErrVec = ErrVec;
@@ -92,5 +93,4 @@ Results(8,:)={'DESC', mean_error_DESC, median_error_DESC};
 
 
 Results
-
 
