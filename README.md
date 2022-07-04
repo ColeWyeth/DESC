@@ -19,7 +19,6 @@ Implementations of the algorithms in the paper appear in Algorithms. Results for
 ## Dependencies
 The following files in folder ``Utils`` include dependencies for running Lie-Algebraic Averaging method that were written by AVISHEK CHATTERJEE (revised and included in this repo). See also [Robust Rotation Averaging](http://www.ee.iisc.ac.in/labs/cvl/papers/robustrelrotavg.pdf) and [Efficient and Robust Large-Scale Rotation Averaging](https://www.cv-foundation.org/openaccess/content_iccv_2013/papers/Chatterjee_Efficient_and_Robust_2013_ICCV_paper.pdf) for details. Simplex projection code borrowed from [Projection Onto a Simplex](https://arxiv.org/abs/1101.6081) by Yunmei Chen and Xiaojing Ye.
 ```
-AverageL1.m
 AverageSO3Graph.m
 BoxMedianSO3Graph.m
 Build_Amatrix.m
@@ -29,10 +28,8 @@ GCW.m
 GlobalSOdCorrectRight.m
 HybridGradient.m
 IRAAB.m
-IRLS_averaging
 IterativeSO3Average.m
 L12.m
-L1.m
 MST.m
 PiecewiseStepSize.m
 q2R.m
@@ -40,7 +37,6 @@ R2q.m
 R2Q.m
 RobustMeanSO3Graph.m
 Rotation_Alignment.m
-self_consist.m
 SimplexProj.m
 SimplexRowProj.m
 Weighted_LAA.m
