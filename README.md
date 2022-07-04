@@ -46,6 +46,6 @@ Weighted_LAA.m
 
 Creators:
 Yunpeng Shi
-shixx517@umn.edu
+yunpengs@princeton.edu
 Cole Wyeth
 wyeth008@umn.edu
