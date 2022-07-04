@@ -17,7 +17,7 @@ Download matlab files. Add paths to the directories Utils, Models, and Algorithm
 Implementations of the algorithms in the paper appear in Algorithms. Results for synthetic data can be reproduced by running Synthetic_Simulations/synthetic_data_experiments.m. Results for real data experiments can be reproduced by loading phototourism data and running the scripts in Real_Data_Experiments, particularly real_DESC and real_MPLS.
 
 ## Dependencies
-The following files in folder ``Utils`` include dependencies for running Lie-Algebraic Averaging method that were written by AVISHEK CHATTERJEE (revised and included in this repo). See also [Robust Rotation Averaging](http://www.ee.iisc.ac.in/labs/cvl/papers/robustrelrotavg.pdf) and [Efficient and Robust Large-Scale Rotation Averaging](https://www.cv-foundation.org/openaccess/content_iccv_2013/papers/Chatterjee_Efficient_and_Robust_2013_ICCV_paper.pdf) for details. Simplex projection code borrowed from [Projection Onto a Simplex](https://arxiv.org/abs/1101.6081) by Yunmei Chen and Xiaojing Ye.
+The following files in folder ``Utils`` include dependencies for running Lie-Algebraic Averaging method that were written by AVISHEK CHATTERJEE (revised and included in this repo). See also [Robust Rotation Averaging](http://www.ee.iisc.ac.in/labs/cvl/papers/robustrelrotavg.pdf) and [Efficient and Robust Large-Scale Rotation Averaging](https://www.cv-foundation.org/openaccess/content_iccv_2013/papers/Chatterjee_Efficient_and_Robust_2013_ICCV_paper.pdf) for details.
 ```
 AverageSO3Graph.m
 BoxMedianSO3Graph.m
@@ -37,8 +37,6 @@ R2q.m
 R2Q.m
 RobustMeanSO3Graph.m
 Rotation_Alignment.m
-SimplexProj.m
-SimplexRowProj.m
 Weighted_LAA.m
 ```
 
