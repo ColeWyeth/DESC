@@ -1,5 +1,6 @@
 rng(2022);
 n_sample = 30;
+gcw_beta = 3;
 learning_rate = 1.0;
 learning_iters = 30;
 AdjMat=data.AdjMat;
@@ -107,9 +108,9 @@ MPLS_parameters.thresholding = [0.95,0.9,0.85,0.8];
 MPLS_parameters.reweighting = CEMP_parameters.reweighting(end);
 MPLS_parameters.cycle_info_ratio = 1./((1:MPLS_parameters.max_iter)+1);
 
-% t40=cputime;
-% R_est_MPLS = MPLS(Ind', RijMat1, CEMP_parameters, MPLS_parameters);
-% t4=cputime-t40;
+t40=cputime;
+R_est_MPLS = MPLS(Ind', RijMat, CEMP_parameters, MPLS_parameters);
+t4=cputime-t40;
 
 %compute error
 [~, MSE_DESC_mean,MSE_DESC_median, ~] = GlobalSOdCorrectRight(R_est_DESC, R_orig);
@@ -117,8 +118,9 @@ MPLS_parameters.cycle_info_ratio = 1./((1:MPLS_parameters.max_iter)+1);
 [~, MSE_DESC_GCW_mean,MSE_DESC_GCW_median, ~] = GlobalSOdCorrectRight(R_est_GCW, R_orig);
 [~, MSE_GM_mean, MSE_GM_median,~] = GlobalSOdCorrectRight(R_est_GM, R_orig);
 [~, MSE_L12_mean, MSE_L12_median,~] = GlobalSOdCorrectRight(R_est_L12, R_orig);
-%[~, MSE_CEMP_L12_mean,MSE_CEMP_L12_median ~] = GlobalSOdCorrectRight(R_est_L12_CEMP, R_orig);
-% 
+[~, MSE_MPLS_mean, MSE_MPLS_median,~] = GlobalSOdCorrectRight(R_est_MPLS, R_orig);
+
+
 fid = fopen(sprintf('output/DESC_%s_%s.txt', data.datasetName, date), 'w'); 
 svec_delta = abs(S_vec-ErrVec);
 desc_str = sprintf('DESC mean %f median %f MST mean %f median %f, GCW mean %f median %f, runtime %f\nSVec estimate mean error %f median %f\n',...
@@ -130,6 +132,9 @@ fprintf(GM_str);
 %fprintf(fid, GM_str);
 l12_str = sprintf('L1/2 mean %f median %f runtime %f\n',MSE_L12_mean, MSE_L12_median, t3); 
 fprintf(l12_str); 
+
+MPLS_str = sprintf('MPLS mean %f median %f runtime %f\n',MSE_MPLS_mean, MSE_MPLS_median, t4); 
+fprintf(MPLS_str);
 %fprintf(fid, l12_str);
 %fprintf('CEMP+L1/2 %f %f\n',MSE_CEMP_L12_mean, MSE_CEMP_L12_median); 
 
