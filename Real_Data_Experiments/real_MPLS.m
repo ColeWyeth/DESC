@@ -1,5 +1,15 @@
 rng(2022);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% code for MPLS "message passing least squares and its applications to rotation synchronization" Yunpeng Shi and Gilad Lerman
+% 
+% the IRLS iterations use the code from Avishek Chatterjee, Venu Madhav Govindu.
+% "Efficient and Robust Large-Scale Rotation Averaging." by
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 nsample = 50;
 beta = 1;
 beta_max = 40;
@@ -266,58 +276,6 @@ end
 cutoff = cut_ind/nbin;
 
 t_start = cputime;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% This implementation is based on the paper 
-% "Efficient and Robust Large-Scale Rotation Averaging." by
-% Avishek Chatterjee, Venu Madhav Govindu.
-%
-% This code robustly performs iteratively reweighted least square relative rotation averaging
-%
-% function [R] = RobustMeanSO3Graph(RR,I,SIGMA,[Rinit],[maxIters])
-% INPUT:        RR = 'm' number of 3 X 3 Relative Rotation Matrices (R_ij) 
-%                    stacked as a 3 X 3 X m Matrix
-%                    OR
-%                    'm' number of 4 X 1 Relative Quaternions (R_ij) 
-%                    stacked as a 4 X m  Matrix
-%                I = Index matrix (ij) of size (2 X m) such that RR(:,:,p)
-%                    (OR RR(:,p) for quaternion representation)  is
-%                    the relative rotation from R(:,:,I(1,p)) to R(:,:,I(2,p))
-%                    (OR R(:,I(1,p)) and  R(:,I(2,p)) for quaternion representation)
-%            SIGMA = Sigma value for M-Estimation in degree (5 degree is preferred)
-%                    Default is 5 degree. Put [] for default.
-%            Rinit = Optional initial guess. 
-%                    Put [] to automatically comput Rinit from spanning tree
-%         maxIters = Maximum number of iterations. Default 100
-%
-% OUTPUT:       R  = 'n' number of 3 X 3 Absolute Rotation matrices stacked as
-%                     a  3 X 3 X n Matrix 
-%                     OR
-%                     'n' number of 4 X 1 Relative Quaternions (R_ij) 
-%                     stacked as a 4 X n  Matrix
-%
-% IMPORTANT NOTES:
-% The underlying model or equation is assumed to be: 
-% X'=R*X; Rij=Rj*inv(Ri) i.e. camera centered coordinate system is used
-% and NOT the geocentered coordinate for which the underlying equations are
-% X'=inv(R)*X; Rij=inv(Ri)*Rj. 
-% To use geocentered coordinate please transpose the rotations or change
-% the sign of the scalar term of the quaternions before feeding into the
-% code and also after getting the result.
-%
-% Feeding of not connected graph is not recomended.
-%
-% This code is able to handle inputs in both Rotation matrix as well as
-% quaternion format. The Format of output is same as that of the input.
-%
-% Programmer: AVISHEK CHATTERJEE
-%             PhD Student (S. R. No. 04-03-05-10-12-11-1-08692)
-%             Learning System and Multimedia Lab
-%             Dept. of Electrical Engineering
-%             INDIAN INSTITUTE OF SCIENCE
-%
-% Dated:  April 2014
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 changeThreshold=1e-3;
 tau = 32;
 tau_max = 32;
@@ -377,25 +335,13 @@ w=zeros(size(QQ,1),4);W=zeros(N,4);
 score=inf;    Iteration=1;
 
 
-%Weights = sqrt(exp(-tau*SVec.^2))';
-
-%Weights = 1./(SVec.^0.75)'; Weights(Weights>1e8)=1e8;
-
 Weights = (1./(SVec.^0.75)');
 
-%Weights = ((SVec<0.005)'); Weights(Weights>1e8)=1e8;
-
-%Weights = sqrt(exp(-50*SVec.^2))'.*((SVec<thresh)'); Weights(Weights>1e4)=1e4;
 Weights(Weights>top_threshold)= top_threshold;
 Weights(SVec>thresh)=right_threshold; 
 
 while((score>changeThreshold)&&(Iteration<maxIters))
     lam = 1/(Iteration+1);
-    %lam = 1/(Iteration^2+1);
-    %lam = 0; %full residual
-    %lam = 1; %full cemp
-    %lam = 0.5;
-    %lam = exp(-Iteration);
     
     %tau=beta;
     i=I(1,:);j=I(2,:);
@@ -415,14 +361,7 @@ while((score>changeThreshold)&&(Iteration<maxIters))
     w(:,1)=2*atan2(s2,w(:,1));
     i=w(:,1)<-pi;  w(i,1)=w(i,1)+2*pi;  i=w(:,1)>=pi;  w(i,1)=w(i,1)-2*pi;
     B=w(:,2:4).*repmat(w(:,1)./s2,[1,3]);
-% Here is an alternative solution for the above 4 lines. This may be
-% marginally faster. But use of this is not recomended as the domain of
-% acos is bounded which may result in truncation error when the solution
-% comes near optima. Usage of atan2 justifies omition of explicit
-% quaternion normalization at every stage.
-%     i=w(:,1)<0;w(i,:)=-w(i,:);
-%     theta2=acos(w(:,1));
-%     B=((w(:,2:4).*repmat((2*theta2./sin(theta2)),[1,3])));
+
     
     
     B(isnan(B))=0;% This tackles the devide by zero problem.
@@ -457,10 +396,7 @@ for i=1:size(Q,1)
 end
 
 
-%[~, MSE_mean,MSE_median, ~] = GlobalSOdCorrectRight(R, R_orig);
 
-
-%fprintf('CEMP_IRLS_new:  mean %f median %f\n',MSE_mean, MSE_median); 
 
     
     E=(Amatrix*W(2:end,2:4)-B); 
@@ -485,30 +421,15 @@ end
     % IR-AAB at current iteration
     EVec = (sum(EMat,1))';
     ESVec = (1-lam)*residual_standard + lam * EVec;
-    %ESVec = max(residual_standard, EVec);
-    %Weights = sqrt(exp(-tau*(SVec'.^2)));
-    %Weights = 1./(ESVec+delt);
-    %Weights = (ESVec<1/tau);
-    %Weights = 1./(ESVec.^0.75); Weights(Weights>1e8)=1e8;
+
     Weights = (1./(ESVec.^0.75));
-    %Weights = ((SVec<0.005)'); Weplights(Weights>1e8)=1e8;
-    %Weights = SIGMA./(ESVec.^2+SIGMA^2);
-    
-    
-    %Weights = exp(-beta.*Err);
-    
-    %Weights=SIGMA./( sum(E.^2,2) + SIGMA^2 );
-    
-    %top_threshold = min(top_threshold*2, 1e4);
+ 
     right_threshold = 1e-4;
     quant_ratio = max(quant_ratio_min, quant_ratio-0.05);
     thresh = quantile(ESVec,quant_ratio);
     Weights(Weights>top_threshold)= top_threshold;
     Weights(ESVec>thresh)=right_threshold; 
-    %G=2*(repmat(Weights.*Weights,[1,size(Amatrix,2)]).*Amatrix)'*E;
-    %G=2*Amatrix'*sparse(1:length(Weights),1:length(Weights),Weights.*Weights,length(Weights),length(Weights))*E;
     
-    %score=norm(W(2:end,2:4));
    
     tau = min(rate_tau*tau, tau_max);
 end
