@@ -5,7 +5,7 @@ rng(2022);
 % code for MPLS "message passing least squares and its applications to rotation synchronization" Yunpeng Shi and Gilad Lerman
 % 
 % the IRLS iterations use the code from Avishek Chatterjee, Venu Madhav Govindu.
-% "Efficient and Robust Large-Scale Rotation Averaging." by
+% "Efficient and Robust Large-Scale Rotation Averaging."
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
