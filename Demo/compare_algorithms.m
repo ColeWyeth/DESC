@@ -4,10 +4,6 @@ n =100; p=0.5; q=0.2; sigma=0.1; model='uniform';
 % generate data with uniform topology
 model_out = Uniform_Topology(n,p,q,sigma,model);
 
-% for self-consistent corruption (in MPLS paper) run:
-% q=0.45;
-% model_out = Rotation_Graph_Generation(n,p,q,sigma,'self-consistent');
-
 
 %model_out = Nonuniform_Topology(n,p, p_node_crpt,p_edge_crpt, sigma_in, sigma_out, crpt_type);
 
