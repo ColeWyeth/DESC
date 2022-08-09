@@ -1,7 +1,9 @@
 %% Demo for synthetic data experiments. 
 %% To apply our algorithm to large scale real data, we recommend use 
-%% larger learning rate DESC_parameters.learning_rate = 1
-%% and smaller number of iterations DESC_parameters.iters = 30
+%% larger learning rate DESC_parameters.learning_rate = 1;
+%% DESC_parameters.Gradient = ConstantStepSize(1);
+%% and smaller number of iterations DESC_parameters.iters = 30;
+
 
 
 % parameters with uniform topology
